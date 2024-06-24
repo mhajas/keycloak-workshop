@@ -1,0 +1,5 @@
+spec:
+  tls:
+  - hosts:
+    - keycloak.${NAMESPACE}.${MINIKUBE_IP}.nip.io
+    secretName: keycloak-tls-secret

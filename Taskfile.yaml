@@ -1,0 +1,97 @@
+version: '3'
+
+output: prefixed
+
+vars:
+  KC_OPERATOR_TAG: "25.0.0"
+  MINIKUBE_IP: 
+    sh: minikube ip
+  NAMESPACE: "keycloak-namespace"
+
+tasks:
+
+  install-keycloak-operator:
+    # https://www.keycloak.org/operator/installation
+    desc: "Installs Keycloak operator to the current cluster"
+    requires:
+      vars:
+        - NAMESPACE
+    cmds:
+      - kubectl create namespace "{{.NAMESPACE}}" || true
+      - kubectl -n {{.NAMESPACE}} apply -f https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/refs/tags/{{.KC_OPERATOR_TAG}}/kubernetes/keycloaks.k8s.keycloak.org-v1.yml
+      - kubectl -n {{.NAMESPACE}} apply -f https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/refs/tags/{{.KC_OPERATOR_TAG}}/kubernetes/keycloakrealmimports.k8s.keycloak.org-v1.yml
+      - kubectl -n {{.NAMESPACE}} delete deployment/keycloak-operator || true
+      - kubectl -n {{.NAMESPACE}} apply -f https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/refs/tags/{{.KC_OPERATOR_TAG}}/kubernetes/kubernetes.yml
+    status:
+      - test "$(kubectl -n keycloak-namespace get deployment/keycloak-operator -o jsonpath='{.metadata.labels.app\.kubernetes\.io/version}')" == "{{.KC_OPERATOR_TAG}}"
+
+  deploy-postgres:
+    # https://www.keycloak.org/operator/basic-deployment
+    desc: "Deploy Postgres database that will be used for Keycloak"
+    requires:
+      vars:
+        - NAMESPACE
+    cmd: kubectl -n {{.NAMESPACE}} apply -f resources/postgres.yaml
+
+  create-certificates:
+    # https://www.keycloak.org/operator/basic-deployment
+    internal: true
+    dir: .task
+    requires:
+      vars:
+        - NAME
+    cmds:
+      - openssl req -subj '/CN={{.NAME}}.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io/O=Test Keycloak./C=US' -addext "subjectAltName = IP:{{.MINIKUBE_IP}}" -newkey rsa:2048 -nodes -keyout {{.NAME}}_key.pem -x509 -days 365 -out {{.NAME}}_certificate.pem
+      - openssl x509 -outform der -in {{.NAME}}_certificate.pem -out {{.NAME}}_certificate.der
+      - kubectl -n {{.NAMESPACE}} delete secret {{.NAME}}-tls-secret && kubectl -n {{.NAMESPACE}} create secret tls {{.NAME}}-tls-secret --cert {{.NAME}}_certificate.pem --key {{.NAME}}_key.pem
+    status:
+      - test -f {{.NAME}}_key.pem
+      - test -f {{.NAME}}_certificate.pem
+      - test -f {{.NAME}}_certificate.der
+
+  deploy-keycloak:
+    # https://www.keycloak.org/operator/basic-deployment
+    deps:
+      - install-keycloak-operator
+      - deploy-postgres
+    cmds:
+      - task: create-certificates
+        vars:
+          NAME: keycloak
+      - kubectl -n {{.NAMESPACE}} create secret generic keycloak-db-secret --from-literal=username=testuser --from-literal=password=testpassword || true
+      - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < resources/keycloak.yaml | kubectl -n {{.NAMESPACE}} apply -f -
+      - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < resources/keycloak-ingress-tls-patch.yaml > .task/ingress-patch.yaml
+      - kubectl -n {{.NAMESPACE}} patch ingress keycloak-kubernetes-quickstart-ingress --patch-file .task/ingress-patch.yaml
+
+  prepare-truststore-trusting-keycloak:
+    dir: .task
+    cmds:
+      - rm i-trust-keycloak.jks
+      - keytool -import -alias keycloak.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io -keystore i-trust-keycloak.jks -file keycloak_certificate.der -storepass password -noprompt
+      - cp -rf i-trust-keycloak.jks ../security-openid-connect-quickstart/src/main/resources/
+
+  build-quarkus-api-sources:
+    dir: security-openid-connect-quickstart
+    cmds:
+      - ./mvnw install -DskipTests -Dminikube.ip={{.MINIKUBE_IP}} -Dnamespace={{.NAMESPACE}}
+
+  build-quarkus-api-docker:
+    dir: security-openid-connect-quickstart
+    cmds:
+      - eval $(minikube docker-env)
+      - docker build . -t security-openid-connect-quickstart:1.0.0-SNAPSHOT -f src/main/docker/Dockerfile.jvm
+
+  deploy-quarkus-api:
+    cmds:
+      - task: prepare-truststore-trusting-keycloak
+      - task: build-quarkus-api-sources
+      - task: build-quarkus-api-docker
+      - kubectl -n {{.NAMESPACE}} apply -f security-openid-connect-quickstart/target/kubernetes/kubernetes.yml
+
+    
+
+
+
+
+    
+    
