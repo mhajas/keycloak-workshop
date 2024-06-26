@@ -7,7 +7,7 @@ spec:
   realm:
     id: riviera-dev-realm
     realm: riviera-dev-realm
-    displayName: Welcome to the workshop!
+    displayName: Riviera Dev workshop
     enabled: true
     roles:
       realm:

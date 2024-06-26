@@ -17,3 +17,6 @@ spec:
     tlsSecret: keycloak-tls-secret
   hostname:
     hostname: keycloak.${NAMESPACE}.${MINIKUBE_IP}.nip.io
+  features:
+    enabled:
+      - persistent-user-sessions
