@@ -1,0 +1,75 @@
+apiVersion: k8s.keycloak.org/v2alpha1
+kind: KeycloakRealmImport
+metadata:
+  name: riviera-dev-realm
+spec:
+  keycloakCRName: keycloak-kubernetes-quickstart
+  realm:
+    id: riviera-dev-realm
+    realm: riviera-dev-realm
+    displayName: Welcome to the workshop!
+    enabled: true
+    roles:
+      realm:
+      - id: 37c611c7-9f28-43aa-8d6a-dcbcf4ad4461
+        name: user
+        description: 'User realm role'
+        composite: false
+        clientRole: false
+        containerId: riviera-dev-realm
+        attributes: {}
+      - id: 5e18da7b-02cb-4c09-848f-263a7ccd83ccd
+        name: admin
+        description: 'Admin realm rolee'
+        composite: false
+        clientRole: false
+        containerId: riviera-dev-realm
+        attributes: {}
+    clients:
+    - id: 3c8ede89-66b2-4364-a27a-d8b93f00a272
+      clientId: quarkus-backend
+      name: ''
+      description: ''
+      rootUrl: http://api.${NAMESPACE}.${MINIKUBE_IP}.nip.io
+      adminUrl: http://api.${NAMESPACE}.${MINIKUBE_IP}.nip.io
+      baseUrl: ''
+      surrogateAuthRequired: false
+      enabled: true
+      alwaysDisplayInConsole: false
+      clientAuthenticatorType: client-secret
+      secret: "1LZ65XcapsfnwEOLsByUW7KKv05mGsZF"
+      redirectUris:
+      - http://api.${NAMESPACE}.${MINIKUBE_IP}.nip.io/*
+      webOrigins:
+      - http://api.${NAMESPACE}.${MINIKUBE_IP}.nip.io
+      notBefore: 0
+      bearerOnly: false
+      consentRequired: false
+      standardFlowEnabled: false
+      implicitFlowEnabled: false
+      directAccessGrantsEnabled: true
+      serviceAccountsEnabled: false
+      publicClient: false
+      frontchannelLogout: true
+      protocol: openid-connect
+      attributes:
+        oidc.ciba.grant.enabled: 'false'
+        client.secret.creation.time: '1719400238'
+        backchannel.logout.session.required: 'true'
+        oauth2.device.authorization.grant.enabled: 'false'
+        backchannel.logout.revoke.offline.tokens: 'false'
+      authenticationFlowBindingOverrides: {}
+      fullScopeAllowed: true
+      nodeReRegistrationTimeout: -1
+      defaultClientScopes:
+      - web-origins
+      - acr
+      - roles
+      - profile
+      - basic
+      - email
+      optionalClientScopes:
+      - address
+      - phone
+      - offline_access
+      - microprofile-jwt

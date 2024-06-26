@@ -17,17 +17,3 @@ spec:
     tlsSecret: keycloak-tls-secret
   hostname:
     hostname: keycloak.${NAMESPACE}.${MINIKUBE_IP}.nip.io
-
----
-
-# apiVersion: k8s.keycloak.org/v2alpha1
-# kind: KeycloakRealmImport
-# metadata:
-#   name: riviera-dev-realm
-# spec:
-#   keycloakCRName: riviera-dev-realm
-#   realm:
-#     id: riviera-dev-realm
-#     realm: riviera-dev-realm
-#     displayName: Welcome to the workshop!
-#     enabled: true

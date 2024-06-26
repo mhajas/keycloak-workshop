@@ -62,6 +62,7 @@ tasks:
       - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < resources/keycloak.yaml | kubectl -n {{.NAMESPACE}} apply -f -
       - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < resources/keycloak-ingress-tls-patch.yaml > .task/ingress-patch.yaml
       - kubectl -n {{.NAMESPACE}} patch ingress keycloak-kubernetes-quickstart-ingress --patch-file .task/ingress-patch.yaml
+      - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < resources/keycloak-realm-import.yaml | kubectl -n {{.NAMESPACE}} apply -f -
 
   prepare-truststore-trusting-keycloak:
     dir: .task
