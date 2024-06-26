@@ -20,3 +20,6 @@ spec:
   features:
     enabled:
       - persistent-user-sessions
+  ingress:
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-buffer-size: "8k"

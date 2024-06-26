@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spa-frontend
+  labels:
+    app: spa-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spa-frontend
+  template:
+    metadata:
+      labels:
+        app: spa-frontend
+    spec:
+      containers:
+      - name: nodeserver
+        image: spa-frontend:1.0.0-SNAPSHOT 
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nodeapp-service
+spec:
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: spa-frontend
+  type: ClusterIP
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  labels:
+    app: spa-frontend
+  name: spa-frontend
+spec:
+  rules:
+    - host: frontend.${NAMESPACE}.${MINIKUBE_IP}.nip.io
+      http:
+        paths:
+          - backend:
+              service:
+                name: nodeapp-service
+                port:
+                  name: http
+            path: /
+            pathType: Prefix

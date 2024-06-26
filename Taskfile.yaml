@@ -95,6 +95,13 @@ tasks:
       - task: build-quarkus-api-docker
       - kubectl -n {{.NAMESPACE}} apply -f security-openid-connect-quickstart/target/kubernetes/kubernetes.yml
 
+
+  deploy-spa-frontend:
+    dir: spa
+    cmds:
+      - eval $(minikube docker-env) && docker build -t spa-frontend:1.0.0-SNAPSHOT .
+      - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < resources/spa.yaml | kubectl -n {{.NAMESPACE}} apply -f - 
+
     
 
 
