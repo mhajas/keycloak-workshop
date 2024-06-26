@@ -7,27 +7,24 @@ spec:
   realm:
     id: riviera-dev-realm
     realm: riviera-dev-realm
-    displayName: Riviera Dev workshop
+    displayName: 'Riviera Dev workshop'
     enabled: true
     roles:
       realm:
-      - id: 37c611c7-9f28-43aa-8d6a-dcbcf4ad4461
-        name: user
+      - name: user
         description: 'User realm role'
         composite: false
         clientRole: false
         containerId: riviera-dev-realm
         attributes: {}
-      - id: 5e18da7b-02cb-4c09-848f-263a7ccd83ccd
-        name: admin
-        description: 'Admin realm rolee'
+      - name: admin
+        description: 'Admin realm role'
         composite: false
         clientRole: false
         containerId: riviera-dev-realm
         attributes: {}
     clients:
-    - id: 3c8ede89-66b2-4364-a27a-d8b93f00a272
-      clientId: quarkus-backend
+    - clientId: quarkus-backend
       name: ''
       description: ''
       rootUrl: http://api.${NAMESPACE}.${MINIKUBE_IP}.nip.io
@@ -73,3 +70,49 @@ spec:
       - phone
       - offline_access
       - microprofile-jwt
+    users:
+    - username: admin
+      firstName: Administrator
+      lastName: The Main
+      email: admin@email.com
+      emailVerified: false
+      createdTimestamp: 1719423923528
+      enabled: true
+      totp: false
+      credentials:
+        - id: ad90997f-e6a8-495f-a5ad-361aa7bca1ed
+          type: password
+          userLabel: My password
+          createdDate: 1719423932260
+          secretData: '{"value":"KhrltyeRCFpTR6y5zV2SotExbMLQ7jOBg4EajpOFkWU=","salt":"qdoQ5ldVyocf+4z0m7XsjQ==","additionalParameters":{}}'
+          credentialData: '{"hashIterations":5,"algorithm":"argon2","additionalParameters":{"hashLength":["32"],"memory":["7168"],"type":["id"],"version":["1.3"],"parallelism":["1"]}}'
+      disableableCredentialTypes: []
+      requiredActions: []
+      realmRoles:
+        - admin
+        - user
+        - default-roles-riviera-dev-realm
+      notBefore: 0
+      groups: []
+    - username: user
+      firstName: User
+      lastName: The First
+      email: user@email.com
+      emailVerified: false
+      createdTimestamp: 1719424016489
+      enabled: true
+      totp: false
+      credentials:
+        - id: 5be1cf70-6c35-45b5-8a32-e0f440512178
+          type: password
+          userLabel: My password
+          createdDate: 1719424028381
+          secretData: '{"value":"7n+7kp4MByv1whJHb7N3KJSiJW+0IV1xEsYukhrtL6g=","salt":"hcYtWpmf4TL09UizIYAMWg==","additionalParameters":{}}'
+          credentialData: '{"hashIterations":5,"algorithm":"argon2","additionalParameters":{"hashLength":["32"],"memory":["7168"],"type":["id"],"version":["1.3"],"parallelism":["1"]}}'
+      disableableCredentialTypes: []
+      requiredActions: []
+      realmRoles:
+        - user
+        - default-roles-riviera-dev-realm
+      notBefore: 0
+      groups: []
