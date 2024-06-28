@@ -73,6 +73,10 @@ tasks:
       - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < resources/keycloak-ingress-tls-patch.yaml > .task/ingress-patch.yaml
       - kubectl -n {{.NAMESPACE}} patch ingress keycloak-kubernetes-quickstart-ingress --patch-file .task/ingress-patch.yaml
       - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < resources/keycloak-realm-import.yaml | kubectl -n {{.NAMESPACE}} apply -f -
+      - |
+        echo "Access Keycloak on https://keycloak.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io"
+        echo "Username:" $(kubectl -n keycloak-namespace get secrets keycloak-kubernetes-quickstart-initial-admin -o json | jq .data.username -r | base64 -d)
+        echo "Password:" $(kubectl -n keycloak-namespace get secrets keycloak-kubernetes-quickstart-initial-admin -o json | jq .data.password -r | base64 -d)
 
   prepare-truststore-trusting-keycloak:
     dir: .task
