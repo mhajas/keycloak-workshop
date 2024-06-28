@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: rest-authz-resource-server
+  name: rest-authz-resource-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rest-authz-resource-server
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: rest-authz-resource-server
+    spec:
+      containers:
+      - image: spring-rest-authz-resource-server:1.0.0-SNAPSHOT
+        name: rest-authz-resource-server
+        resources: {}
+        volumeMounts:
+          - name: truststore-volume
+            readOnly: true
+            mountPath: "/mnt/"
+        env:
+          - name: JAVA_OPTS
+            value: "-Djavax.net.ssl.trustStorePassword=password -Djavax.net.ssl.trustStore=/mnt/i-trust-keycloak.jks -Djavax.net.ssl.trustStoreType=jks"
+      volumes:
+        - name: truststore-volume
+          secret:
+            secretName: i-trust-keycloak-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: rest-authz-resource-server
+  name: rest-authz-resource-server
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: rest-authz-resource-server
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  labels:
+    app: rest-authz-resource-server
+  name: rest-authz-resource-server
+spec:
+  rules:
+    - host: api-springboot.${NAMESPACE}.${MINIKUBE_IP}.nip.io
+      http:
+        paths:
+          - backend:
+              service:
+                name: rest-authz-resource-server
+                port:
+                  name: http
+            path: /
+            pathType: Prefix

@@ -46,9 +46,12 @@ tasks:
       vars:
         - NAME
     cmds:
-      - openssl req -subj '/CN={{.NAME}}.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io/O=Test Keycloak./C=US' -addext "subjectAltName = IP:{{.MINIKUBE_IP}}" -newkey rsa:2048 -nodes -keyout {{.NAME}}_key.pem -x509 -days 365 -out {{.NAME}}_certificate.pem
+      - openssl req -subj '/CN={{.NAME}}.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io/O=Test Keycloak./C=US' -addext "subjectAltName = IP:{{.MINIKUBE_IP}}, DNS:{{.NAME}}.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io" -newkey rsa:2048 -nodes -keyout {{.NAME}}_key.pem -x509 -days 365 -out {{.NAME}}_certificate.pem
       - openssl x509 -outform der -in {{.NAME}}_certificate.pem -out {{.NAME}}_certificate.der
       - (kubectl -n {{.NAMESPACE}} delete secret {{.NAME}}-tls-secret || true) && kubectl -n {{.NAMESPACE}} create secret tls {{.NAME}}-tls-secret --cert {{.NAME}}_certificate.pem --key {{.NAME}}_key.pem
+      - rm i-trust-{{.NAME}}.jks || true
+      - keytool -import -alias {{.NAME}}.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io -keystore i-trust-{{.NAME}}.jks -file {{.NAME}}_certificate.der -storepass password -noprompt
+      - (kubectl -n {{.NAMESPACE}} delete secret i-trust-{{.NAME}}-secret || true) && kubectl -n {{.NAMESPACE}} create secret generic i-trust-{{.NAME}}-secret --from-file=i-trust-{{.NAME}}.jks
     status:
       - test -f {{.NAME}}_key.pem
       - test -f {{.NAME}}_certificate.pem
@@ -90,7 +93,7 @@ tasks:
 
   deploy-quarkus-api:
     cmds:
-      - task: prepare-truststore-trusting-keycloak
+      - cp -rf .task/i-trust-keycloak.jks security-openid-connect-quickstart/src/main/resources/
       - task: build-quarkus-api-sources
       - task: build-quarkus-api-docker
       - kubectl -n {{.NAMESPACE}} apply -f security-openid-connect-quickstart/target/kubernetes/kubernetes.yml
@@ -101,6 +104,12 @@ tasks:
     cmds:
       - eval $(minikube docker-env) && docker build -t spa-frontend:1.0.0-SNAPSHOT .
       - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < resources/spa.yaml | kubectl -n {{.NAMESPACE}} apply -f - 
+
+  deploy-spring-backend:
+    dir: rest-authz-resource-server
+    cmds:
+      - eval $(minikube docker-env) && ./mvnw spring-boot:build-image -DskipTests
+      - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < resources/deployment.yaml | kubectl -n {{.NAMESPACE}} apply -f - 
 
     
 

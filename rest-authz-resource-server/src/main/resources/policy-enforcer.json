@@ -1,0 +1,8 @@
+{
+  "realm": "riviera-dev-realm",
+  "auth-server-url": "https://keycloak.keycloak-namespace.192.168.49.2.nip.io",
+  "resource": "springboot-backend",
+  "credentials": {
+    "secret": "Sj9DAvEG61ehuKIsj16PQpE34bk6Y4zq"
+  }
+}
