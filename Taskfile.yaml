@@ -3,7 +3,7 @@ version: '3'
 output: prefixed
 
 vars:
-  KC_OPERATOR_TAG: "25.0.0"
+  KC_OPERATOR_TAG: "25.0.1"
   MINIKUBE_IP: 
     sh: minikube ip
   NAMESPACE: "keycloak-namespace"
@@ -11,6 +11,7 @@ vars:
 tasks:
 
   prepare-minikube:
+    desc: "Prepare Minikube"
     cmds:
       - minikube addons enable ingress
       - minikube addons enable ingress-dns
@@ -56,8 +57,10 @@ tasks:
       - test -f {{.NAME}}_key.pem
       - test -f {{.NAME}}_certificate.pem
       - test -f {{.NAME}}_certificate.der
+      - kubectl -n {{.NAMESPACE}} get secret/{{.NAME}}-tls-secret
 
   deploy-keycloak:
+    desc: "Install Keycloak"
     # https://www.keycloak.org/operator/basic-deployment
     deps:
       - install-keycloak-operator
@@ -73,6 +76,10 @@ tasks:
       - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < resources/keycloak-ingress-tls-patch.yaml > .task/ingress-patch.yaml
       - kubectl -n {{.NAMESPACE}} patch ingress keycloak-kubernetes-quickstart-ingress --patch-file .task/ingress-patch.yaml
       - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < resources/keycloak-realm-import.yaml | kubectl -n {{.NAMESPACE}} apply -f -
+      - |
+        echo "Access Keycloak on https://keycloak.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io"
+        echo "Username:" $(kubectl -n keycloak-namespace get secrets keycloak-kubernetes-quickstart-initial-admin -o json | jq .data.username -r | base64 -d)
+        echo "Password:" $(kubectl -n keycloak-namespace get secrets keycloak-kubernetes-quickstart-initial-admin -o json | jq .data.password -r | base64 -d)
 
   prepare-truststore-trusting-keycloak:
     dir: .task
