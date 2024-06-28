@@ -54,6 +54,7 @@ tasks:
       - test -f {{.NAME}}_key.pem
       - test -f {{.NAME}}_certificate.pem
       - test -f {{.NAME}}_certificate.der
+      - kubectl -n {{.NAMESPACE}} get secret/{{.NAME}}-tls-secret
 
   deploy-keycloak:
     desc: "Install Keycloak"
