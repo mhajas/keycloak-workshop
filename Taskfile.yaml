@@ -108,11 +108,11 @@ tasks:
       - eval $(minikube docker-env) && docker build -t spa-frontend:1.0.0-SNAPSHOT .
       - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < resources/spa.yaml | kubectl -n {{.NAMESPACE}} apply -f - 
 
-  deploy-spring-backend:
-    dir: rest-authz-resource-server
+  spring-security-deploy:
+    dir: spring-security
     cmds:
-      - eval $(minikube docker-env) && ./mvnw spring-boot:build-image -DskipTests
-      - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < resources/deployment.yaml | kubectl -n {{.NAMESPACE}} apply -f - 
+      - eval $(minikube docker-env) && ./mvnw spring-boot:build-image -DskipTests -Dminikube.ip={{.MINIKUBE_IP}} -Dnamespace={{.NAMESPACE}}
+      - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < k8s-resources/deployment.yaml | kubectl -n {{.NAMESPACE}} apply -f - 
 
     
 

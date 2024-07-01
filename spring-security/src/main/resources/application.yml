@@ -1,0 +1,6 @@
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: https://keycloak.${namespace}.${minikube.ip}.nip.io/realms/riviera-dev-realm/protocol/openid-connect/certs
