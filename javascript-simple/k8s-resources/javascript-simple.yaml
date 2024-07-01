@@ -1,29 +1,32 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: spa-frontend
+  name: javascript-simple
   labels:
-    app: spa-frontend
+    app: javascript-simple
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: spa-frontend
+      app: javascript-simple
   template:
     metadata:
       labels:
-        app: spa-frontend
+        app: javascript-simple
     spec:
       containers:
       - name: nodeserver
-        image: spa-frontend:1.0.0-SNAPSHOT 
+        image: javascript-simple:1.0.0-SNAPSHOT 
         ports:
         - containerPort: 8080
+        env:
+        - name: KC_URL
+          value: https://keycloak.${NAMESPACE}.${MINIKUBE_IP}.nip.io
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: nodeapp-service
+  name: javascript-simple-service
 spec:
   ports:
     - name: http
@@ -31,7 +34,7 @@ spec:
       protocol: TCP
       targetPort: 8080
   selector:
-    app: spa-frontend
+    app: javascript-simple
   type: ClusterIP
 
 ---
@@ -40,8 +43,8 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   labels:
-    app: spa-frontend
-  name: spa-frontend
+    app: javascript-simple
+  name: javascript-simple
 spec:
   rules:
     - host: frontend.${NAMESPACE}.${MINIKUBE_IP}.nip.io
@@ -49,7 +52,7 @@ spec:
         paths:
           - backend:
               service:
-                name: nodeapp-service
+                name: javascript-simple-service
                 port:
                   name: http
             path: /

@@ -1,6 +1,6 @@
 {
   "realm": "riviera-dev-realm",
-  "auth-server-url": "https://keycloak.keycloak-namespace.192.168.49.2.nip.io",
+  "auth-server-url": "${KC_URL}",
   "ssl-required": "external",
   "resource": "spa-frontend",
   "public-client": true

@@ -102,11 +102,11 @@ tasks:
       - kubectl -n {{.NAMESPACE}} apply -f quarkus-oidc-extension/target/kubernetes/kubernetes.yml
 
 
-  deploy-spa-frontend:
-    dir: spa
+  javascript-simple-deploy:
+    dir: javascript-simple
     cmds:
-      - eval $(minikube docker-env) && docker build -t spa-frontend:1.0.0-SNAPSHOT .
-      - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < resources/spa.yaml | kubectl -n {{.NAMESPACE}} apply -f - 
+      - eval $(minikube docker-env) && docker build -t javascript-simple:1.0.0-SNAPSHOT .
+      - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < k8s-resources/javascript-simple.yaml | kubectl -n {{.NAMESPACE}} apply -f - 
 
   spring-security-deploy:
     dir: spring-security
