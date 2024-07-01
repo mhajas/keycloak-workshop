@@ -27,7 +27,7 @@ import io.quarkus.security.identity.SecurityIdentity;
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
-@Path("/api/users")
+@Path("user")
 public class UsersResource {
 
     @Inject
@@ -35,22 +35,8 @@ public class UsersResource {
 
     @GET
     @RolesAllowed("user")
-    @Path("/me")
     @NoCache
-    public User me() {
-        return new User(identity);
-    }
-
-    public static class User {
-
-        private final String userName;
-
-        User(SecurityIdentity identity) {
-            this.userName = identity.getPrincipal().getName();
-        }
-
-        public String getUserName() {
-            return userName;
-        }
+    public String me() {
+        return "Hello from Quarkus for " + identity.getPrincipal().getName();
     }
 }

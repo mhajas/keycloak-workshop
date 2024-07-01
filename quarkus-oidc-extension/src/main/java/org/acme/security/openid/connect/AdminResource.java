@@ -16,24 +16,30 @@
 package org.acme.security.openid.connect;
 
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 
 import io.quarkus.security.Authenticated;
+import io.quarkus.security.identity.SecurityIdentity;
+
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
-@Path("/api/admin")
+@Path("/admin")
 @Authenticated
 public class AdminResource {
+
+    @Inject
+    SecurityIdentity identity;
 
     @GET
     @RolesAllowed("admin")
     @Produces(MediaType.TEXT_PLAIN)
     public String admin() {
-        return "granted";
+        return "Hello administrator " + identity.getPrincipal().getName();
     }
 }
