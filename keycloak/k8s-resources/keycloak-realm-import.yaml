@@ -3,7 +3,7 @@ kind: KeycloakRealmImport
 metadata:
   name: riviera-dev-realm
 spec:
-  keycloakCRName: keycloak-kubernetes-quickstart
+  keycloakCRName: keycloak-riviera-dev
   realm:
     id: riviera-dev-realm
     realm: riviera-dev-realm

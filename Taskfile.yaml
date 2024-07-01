@@ -10,15 +10,17 @@ vars:
 
 tasks:
 
+  # MINIKUBE
   prepare-minikube:
     desc: "Prepare Minikube"
     cmds:
       - minikube addons enable ingress
       - minikube addons enable ingress-dns
 
-  install-keycloak-operator:
+  # KEYCLOAK
+  keycloak-operator-deploy:
     # https://www.keycloak.org/operator/installation
-    desc: "Installs Keycloak operator to the current cluster"
+    desc: "Install Keycloak operator to the current cluster"
     requires:
       vars:
         - NAMESPACE
@@ -28,17 +30,17 @@ tasks:
       - kubectl -n {{.NAMESPACE}} apply -f https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/refs/tags/{{.KC_OPERATOR_TAG}}/kubernetes/keycloakrealmimports.k8s.keycloak.org-v1.yml
       - kubectl -n {{.NAMESPACE}} delete deployment/keycloak-operator || true
       - kubectl -n {{.NAMESPACE}} apply -f https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/refs/tags/{{.KC_OPERATOR_TAG}}/kubernetes/kubernetes.yml
-    status:
-      - test "$(kubectl -n keycloak-namespace get deployment/keycloak-operator -o jsonpath='{.metadata.labels.app\.kubernetes\.io/version}')" == "{{.KC_OPERATOR_TAG}}"
 
-  deploy-postgres:
+  # KEYCLOAK
+  keycloak-postgres-deploy:
     # https://www.keycloak.org/operator/basic-deployment
     desc: "Deploy Postgres database that will be used for Keycloak"
     requires:
       vars:
         - NAMESPACE
-    cmd: kubectl -n {{.NAMESPACE}} apply -f resources/postgres.yaml
+    cmd: kubectl -n {{.NAMESPACE}} apply -f keycloak/k8s-resources/postgres.yaml
 
+  # KEYCLOAK
   create-certificates:
     # https://www.keycloak.org/operator/basic-deployment
     internal: true
@@ -59,51 +61,45 @@ tasks:
       - test -f {{.NAME}}_certificate.der
       - kubectl -n {{.NAMESPACE}} get secret/{{.NAME}}-tls-secret
 
-  deploy-keycloak:
-    desc: "Install Keycloak"
+  # KEYCLOAK
+  keycloak-deploy:
     # https://www.keycloak.org/operator/basic-deployment
+    desc: "Install Keycloak"
     deps:
-      - install-keycloak-operator
-      - deploy-postgres
+      - keycloak-operator-deploy
+      - keycloak-postgres-deploy
     cmds:
       - task: create-certificates
         vars:
           NAME: keycloak
       - kubectl -n {{.NAMESPACE}} create secret generic keycloak-db-secret --from-literal=username=testuser --from-literal=password=testpassword || true
-      - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < resources/keycloak.yaml | kubectl -n {{.NAMESPACE}} apply -f -
+      - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < keycloak/k8s-resources/keycloak.yaml | kubectl -n {{.NAMESPACE}} apply -f -
       - sleep 5
-      - kubectl -n {{.NAMESPACE}} wait --for=condition=Ready --timeout=180s keycloaks.k8s.keycloak.org/keycloak-kubernetes-quickstart
-      - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < resources/keycloak-ingress-tls-patch.yaml > .task/ingress-patch.yaml
-      - kubectl -n {{.NAMESPACE}} patch ingress keycloak-kubernetes-quickstart-ingress --patch-file .task/ingress-patch.yaml
-      - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < resources/keycloak-realm-import.yaml | kubectl -n {{.NAMESPACE}} apply -f -
+      - kubectl -n {{.NAMESPACE}} wait --for=condition=Ready --timeout=180s keycloaks.k8s.keycloak.org/keycloak-riviera-dev
+      - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < keycloak/k8s-resources/keycloak-ingress-tls-patch.yaml > .task/ingress-patch.yaml
+      - kubectl -n {{.NAMESPACE}} patch ingress keycloak-riviera-dev-ingress --patch-file .task/ingress-patch.yaml
+      - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < keycloak/k8s-resources/keycloak-realm-import.yaml | kubectl -n {{.NAMESPACE}} apply -f -
       - |
         echo "Access Keycloak on https://keycloak.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io"
-        echo "Username:" $(kubectl -n keycloak-namespace get secrets keycloak-kubernetes-quickstart-initial-admin -o json | jq .data.username -r | base64 -d)
-        echo "Password:" $(kubectl -n keycloak-namespace get secrets keycloak-kubernetes-quickstart-initial-admin -o json | jq .data.password -r | base64 -d)
+        echo "Username:" $(kubectl -n keycloak-namespace get secrets keycloak-riviera-dev-initial-admin -o json | jq .data.username -r | base64 -d)
+        echo "Password:" $(kubectl -n keycloak-namespace get secrets keycloak-riviera-dev-initial-admin -o json | jq .data.password -r | base64 -d)
 
-  prepare-truststore-trusting-keycloak:
-    dir: .task
-    cmds:
-      - rm i-trust-keycloak.jks || true
-      - keytool -import -alias keycloak.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io -keystore i-trust-keycloak.jks -file keycloak_certificate.der -storepass password -noprompt
-      - cp -rf i-trust-keycloak.jks ../security-openid-connect-quickstart/src/main/resources/
-
-  build-quarkus-api-sources:
-    dir: security-openid-connect-quickstart
+  quarkus-build-sources:
+    dir: quarkus-oidc-extension
     cmds:
       - ./mvnw install -DskipTests -Dminikube.ip={{.MINIKUBE_IP}} -Dnamespace={{.NAMESPACE}}
 
-  build-quarkus-api-docker:
-    dir: security-openid-connect-quickstart
+  quarkus-build-docker:
+    dir: quarkus-oidc-extension
     cmds:
-      - eval $(minikube docker-env) && docker build . -t security-openid-connect-quickstart:1.0.0-SNAPSHOT -f src/main/docker/Dockerfile.jvm
+      - eval $(minikube docker-env) && docker build . -t quarkus-oidc-extension:1.0.0-SNAPSHOT -f src/main/docker/Dockerfile.jvm
 
-  deploy-quarkus-api:
+  quarkus-deploy:
     cmds:
-      - cp -rf .task/i-trust-keycloak.jks security-openid-connect-quickstart/src/main/resources/
-      - task: build-quarkus-api-sources
-      - task: build-quarkus-api-docker
-      - kubectl -n {{.NAMESPACE}} apply -f security-openid-connect-quickstart/target/kubernetes/kubernetes.yml
+      - cp -rf .task/i-trust-keycloak.jks quarkus-oidc-extension/src/main/resources/
+      - task: quarkus-build-sources
+      - task: quarkus-build-docker
+      - kubectl -n {{.NAMESPACE}} apply -f quarkus-oidc-extension/target/kubernetes/kubernetes.yml
 
 
   deploy-spa-frontend:
