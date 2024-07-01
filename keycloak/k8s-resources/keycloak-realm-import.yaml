@@ -24,7 +24,7 @@ spec:
         containerId: riviera-dev-realm
         attributes: {}
     clients:
-    - clientId: quarkus-backend
+    - clientId: quarkus-oidc-extension
       name: ''
       description: ''
       rootUrl: http://api.${NAMESPACE}.${MINIKUBE_IP}.nip.io
@@ -70,7 +70,7 @@ spec:
       - phone
       - offline_access
       - microprofile-jwt
-    - clientId: spa-frontend
+    - clientId: javascript-simple
       name: ''
       description: ''
       rootUrl: ''
@@ -81,9 +81,9 @@ spec:
       alwaysDisplayInConsole: false
       clientAuthenticatorType: client-secret
       redirectUris:
-      - "http://frontend.${NAMESPACE}.${MINIKUBE_IP}.nip.io/*"
+      - "http://javascript-simple.${NAMESPACE}.${MINIKUBE_IP}.nip.io/*"
       webOrigins:
-      - "http://frontend.${NAMESPACE}.${MINIKUBE_IP}.nip.io"
+      - "http://javascript-simple.${NAMESPACE}.${MINIKUBE_IP}.nip.io"
       notBefore: 0
       bearerOnly: false
       consentRequired: false
@@ -115,11 +115,11 @@ spec:
       - phone
       - offline_access
       - microprofile-jwt
-    - clientId: springboot-backend
+    - clientId: spring-security
       enabled: true
       bearerOnly: false
       redirectUris:
-      - '*'
+      - 'https://spring-security.keycloak-namespace.192.168.49.2.nip.io/*'
       secret: Sj9DAvEG61ehuKIsj16PQpE34bk6Y4zq
       authorizationServicesEnabled: true
       directAccessGrantsEnabled: true

@@ -62,9 +62,9 @@ tasks:
       - kubectl -n {{.NAMESPACE}} get secret/{{.NAME}}-tls-secret
 
   # KEYCLOAK
-  keycloak-deploy:
+  keycloak-deploy-all:
     # https://www.keycloak.org/operator/basic-deployment
-    desc: "Install Keycloak"
+    desc: "Deploy whole Keycloak"
     deps:
       - keycloak-operator-deploy
       - keycloak-postgres-deploy
@@ -81,20 +81,23 @@ tasks:
       - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < keycloak/k8s-resources/keycloak-realm-import.yaml | kubectl -n {{.NAMESPACE}} apply -f -
       - |
         echo "Access Keycloak on https://keycloak.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io"
-        echo "Username:" $(kubectl -n keycloak-namespace get secrets keycloak-riviera-dev-initial-admin -o json | jq .data.username -r | base64 -d)
-        echo "Password:" $(kubectl -n keycloak-namespace get secrets keycloak-riviera-dev-initial-admin -o json | jq .data.password -r | base64 -d)
+        echo "Username:" $(kubectl -n {{.NAMESPACE}} get secrets keycloak-riviera-dev-initial-admin -o json | jq .data.username -r | base64 -d)
+        echo "Password:" $(kubectl -n {{.NAMESPACE}} get secrets keycloak-riviera-dev-initial-admin -o json | jq .data.password -r | base64 -d)
 
   quarkus-build-sources:
+    desc: "Build Quarkus app sources"
     dir: quarkus-oidc-extension
     cmds:
       - ./mvnw install -DskipTests -Dminikube.ip={{.MINIKUBE_IP}} -Dnamespace={{.NAMESPACE}}
 
   quarkus-build-docker:
+    desc: "Build Quarkus docker image for Minikube environment"
     dir: quarkus-oidc-extension
     cmds:
       - eval $(minikube docker-env) && docker build . -t quarkus-oidc-extension:1.0.0-SNAPSHOT -f src/main/docker/Dockerfile.jvm
 
-  quarkus-deploy:
+  quarkus-deploy-all:
+    desc: "Prepare and deploy Quarkus app"
     cmds:
       - cp -rf .task/i-trust-keycloak.jks quarkus-oidc-extension/src/main/resources/
       - task: quarkus-build-sources

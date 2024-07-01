@@ -1,7 +1,7 @@
 Steps to deploy:
 
 1. `task deploy-keycloak`
-2. Keycloak realm creation is not yet automated. I used `riviera-dev-realm` and `quarkus-backend`. In this version they need to be create manually
+2. Keycloak realm creation is not yet automated. I used `riviera-dev-realm` and `quarkus-oidc-extension`. In this version they need to be create manually
 3. `task deploy-quakus-api`
 4. `task deploy-spa-frontend`
 

@@ -55,7 +55,7 @@ metadata:
   name: spring-security
 spec:
   rules:
-    - host: api-springboot.${NAMESPACE}.${MINIKUBE_IP}.nip.io
+    - host: spring-security.${NAMESPACE}.${MINIKUBE_IP}.nip.io
       http:
         paths:
           - backend:
