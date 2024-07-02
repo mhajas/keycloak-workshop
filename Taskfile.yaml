@@ -121,7 +121,7 @@ tasks:
     dir: spring-security
     cmds:
       - eval $(minikube docker-env) && ./mvnw spring-boot:build-image -DskipTests -Dminikube.ip={{.MINIKUBE_IP}} -Dnamespace={{.NAMESPACE}}
-      - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} CHECKSUM=$(sha256sum target/spring-security-1.0.0-SNAPSHOT.jar | awk '{ print $1 }') envsubst < k8s-resources/deployment.yaml | kubectl -n {{.NAMESPACE}} apply -f - 
+      - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} CHECKSUM=$(sha256sum target/spring-security-1.0.0-SNAPSHOT.jar | awk '{ print $1 }') envsubst < k8s-resources/spring-security.yaml | kubectl -n {{.NAMESPACE}} apply -f - 
 
     
 
