@@ -23,7 +23,6 @@ import org.keycloak.adapters.authorization.integration.jakarta.ServletPolicyEnfo
 import org.keycloak.adapters.authorization.spi.ConfigurationResolver;
 import org.keycloak.adapters.authorization.spi.HttpRequest;
 import org.keycloak.representations.adapters.config.PolicyEnforcerConfig;
-import org.keycloak.util.JsonSerialization;
 import org.keycloak.util.SystemPropertiesJsonParserFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
