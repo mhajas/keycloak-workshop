@@ -14,6 +14,7 @@ tasks:
   prepare-minikube:
     desc: "Prepare Minikube"
     cmds:
+      - minikube start
       - minikube addons enable ingress
       - minikube addons enable ingress-dns
 

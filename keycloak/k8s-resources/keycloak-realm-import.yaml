@@ -27,8 +27,8 @@ spec:
     - clientId: quarkus-oidc-extension
       name: ''
       description: ''
-      rootUrl: http://api.${NAMESPACE}.${MINIKUBE_IP}.nip.io
-      adminUrl: http://api.${NAMESPACE}.${MINIKUBE_IP}.nip.io
+      rootUrl: http://quarkus-oidc-extension.${NAMESPACE}.${MINIKUBE_IP}.nip.io # REPLACE WITH QUARKUS_URL
+      adminUrl: http://quarkus-oidc-extension.${NAMESPACE}.${MINIKUBE_IP}.nip.io # REPLACE WITH QUARKUS_URL
       baseUrl: ''
       surrogateAuthRequired: false
       enabled: true
@@ -36,9 +36,7 @@ spec:
       clientAuthenticatorType: client-secret
       secret: "1LZ65XcapsfnwEOLsByUW7KKv05mGsZF"
       redirectUris:
-      - http://api.${NAMESPACE}.${MINIKUBE_IP}.nip.io/*
-      webOrigins:
-      - http://api.${NAMESPACE}.${MINIKUBE_IP}.nip.io
+      - http://quarkus-oidc-extension.${NAMESPACE}.${MINIKUBE_IP}.nip.io/* # REPLACE WITH QUARKUS_URL and append /*
       notBefore: 0
       bearerOnly: false
       consentRequired: false
@@ -81,9 +79,54 @@ spec:
       alwaysDisplayInConsole: false
       clientAuthenticatorType: client-secret
       redirectUris:
-      - "http://javascript-simple.${NAMESPACE}.${MINIKUBE_IP}.nip.io/*"
+      - "http://javascript-simple.${NAMESPACE}.${MINIKUBE_IP}.nip.io/*" # REPLACE WITH JAVASCRIPT_SIMPLE_URL and append /*
       webOrigins:
-      - "http://javascript-simple.${NAMESPACE}.${MINIKUBE_IP}.nip.io"
+      - "http://javascript-simple.${NAMESPACE}.${MINIKUBE_IP}.nip.io" # REPLACE WITH JAVASCRIPT_SIMPLE_URL
+      notBefore: 0
+      bearerOnly: false
+      consentRequired: false
+      standardFlowEnabled: true
+      implicitFlowEnabled: false
+      directAccessGrantsEnabled: true
+      serviceAccountsEnabled: false
+      publicClient: true
+      frontchannelLogout: true
+      protocol: openid-connect
+      attributes:
+        oidc.ciba.grant.enabled: 'false'
+        backchannel.logout.session.required: 'true'
+        oauth2.device.authorization.grant.enabled: 'false'
+        display.on.consent.screen: 'false'
+        backchannel.logout.revoke.offline.tokens: 'false'
+      authenticationFlowBindingOverrides: {}
+      fullScopeAllowed: true
+      nodeReRegistrationTimeout: -1
+      defaultClientScopes:
+      - web-origins
+      - acr
+      - roles
+      - profile
+      - basic
+      - email
+      optionalClientScopes:
+      - address
+      - phone
+      - offline_access
+      - microprofile-jwt
+    - clientId: javascript-react
+      name: ''
+      description: ''
+      rootUrl: ''
+      adminUrl: ''
+      baseUrl: ''
+      surrogateAuthRequired: false
+      enabled: true
+      alwaysDisplayInConsole: false
+      clientAuthenticatorType: client-secret
+      redirectUris:
+      - "http://javascript-react.${NAMESPACE}.${MINIKUBE_IP}.nip.io/*" # REPLACE WITH JAVASCRIPT_REACT_URL and append /*
+      webOrigins:
+      - "http://javascript-react.${NAMESPACE}.${MINIKUBE_IP}.nip.io" # REPLACE WITH JAVASCRIPT_REACT_URL
       notBefore: 0
       bearerOnly: false
       consentRequired: false
@@ -119,7 +162,7 @@ spec:
       enabled: true
       bearerOnly: false
       redirectUris:
-      - 'https://spring-security.keycloak-namespace.192.168.49.2.nip.io/*'
+      - 'https://spring-security.${NAMESPACE}.${MINIKUBE_IP}.nip.io/*' # REPLACE WITH SPRING_SECURITY_URL and append /*
       secret: Sj9DAvEG61ehuKIsj16PQpE34bk6Y4zq
       authorizationServicesEnabled: true
       directAccessGrantsEnabled: true
