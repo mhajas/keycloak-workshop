@@ -49,13 +49,13 @@ minikube addons enable ingress-dns
 
 This step deploys Keycloak operator, Postgres database, Keycloak server and a Keycloak realm names `riviera-dev-realm` with all necessary resources.
 
-#### Automated deployment
+#### [Automated]
 
 ```bash
 task keycloak-deploy-all
 ```
 
-#### Manual deployment
+#### [Manual]
 
 
 1. Create a namespace for Keycloak
@@ -102,9 +102,9 @@ task keycloak-deploy-all
    - Realm `riviera-dev-realm`
    - Clients for all application we will use in this workshop
    - Roles `admin` and `user`
-   - Users `admin` (with role `admin`) and `user` (with role `user`) with passwords `admin` and `user`.
+   - Users `admin` (with roles `user` and `admin`) and `user` (with role `user`) with passwords `admin` and `user`.
    
-   Keycloak needs to be aware of locations of each application it is securing, therefore the file `keycloak/k8s-resources/keycloak-realm-import.yaml` needs to be updated with the actual URLs (Note this step can be done later in the Keycloak admin console). Look for the comment `# REPLACE WITH APPLICATION_URL` and replace the URLs with actual values. Note in some cases you need to append `/*` to the URL. 
+   Keycloak needs to be aware of locations of each application it is securing, therefore the file `keycloak/k8s-resources/keycloak-realm-import.yaml` needs to be updated with the actual URLs (Note this step can be done later in the Keycloak admin console). Look for the comment `# REPLACE WITH APPLICATION_URL` and replace the URLs with actual values. Note the comment sometimes contains information to append `/*` to the URL. 
    Then execute the following command:
     ```bash
     kubectl -n keycloak-namespace apply -f keycloak/k8s-resources/keycloak-realm-import.yaml
@@ -121,4 +121,81 @@ echo "Password:" $(kubectl -n keycloak-namespace get secrets keycloak-riviera-de
 
 Access Keycloak on the printed URL and login with the printed credentials. You should be able to access Keycloak admin console and `riviera-dev-realm` should be available if created. 
 
+#### Obtain Keycloak token that can be later used to test APIs
 
+Obtain token for both users by executing the following commands:
+```bash
+export KEYCLOAK_URL=$(kubectl -n keycloak-namespace get ingress/keycloak-riviera-dev-ingress -o jsonpath='{.spec.rules[0].host}')
+export USER_TOKEN=$(curl --insecure -X POST https://$KEYCLOAK_URL/realms/riviera-dev-realm/protocol/openid-connect/token \
+    -H "Authorization: Basic $(echo -n "quarkus-oidc-extension:1LZ65XcapsfnwEOLsByUW7KKv05mGsZF" | base64)" \
+    -H "content-type: application/x-www-form-urlencoded" \
+    -d "username=user&password=user&grant_type=password" | jq --raw-output '.access_token')
+export ADMIN_TOKEN=$(curl --insecure -X POST https://$KEYCLOAK_URL/realms/riviera-dev-realm/protocol/openid-connect/token \
+    -H "Authorization: Basic $(echo -n "quarkus-oidc-extension:1LZ65XcapsfnwEOLsByUW7KKv05mGsZF" | base64)" \
+    -H "content-type: application/x-www-form-urlencoded" \
+    -d "username=admin&password=admin&grant_type=password" | jq --raw-output '.access_token')
+```
+
+### Deploying Quarkus with OIDC extension
+
+This step deploys a Quarkus with OIDC extension that is secured by Keycloak.
+
+#### [Automated]
+
+```bash
+task quarkus-deploy-all
+```
+
+#### [Manual]
+
+1. Move `i-trust-keycloak.jks` to `quarkus-oidc-extension/src/main/resources` directory.
+    ```bash
+    mv i-trust-keycloak.jks quarkus-oidc-extension/src/main/resources
+    ```
+2. Change directory to quarkus-oid-extension.
+    ```bash
+    cd quarkus-oidc-extension
+    ```
+3. If you are not using Minikube, it is necessary to do some configuration changes in [`application.properties` file](https://github.com/mhajas/keycloak-workshop/blob/main/quarkus-oidc-extension/src/main/resources/application.properties).
+    - configure [Quarkus Kubernetes extension](https://quarkus.io/guides/deploying-to-kubernetes) to use correct image where you plan to push the Docker image that will be built in the following step. 
+    - Configure Ingress host [here](https://github.com/mhajas/keycloak-workshop/blob/c585f0dca499b0b5d3d9a521c36a626ea649159a/quarkus-oidc-extension/src/main/resources/application.properties#L9-L16) to match the correct host.
+    - Configure [quarkus.oidc.auth-server-url](https://github.com/mhajas/keycloak-workshop/blob/c585f0dca499b0b5d3d9a521c36a626ea649159a/quarkus-oidc-extension/src/main/resources/application.properties#L2C22-L2C30) to point to `$KEYCLOAK_URL/realms/riviera-dev-realm`.
+4. Build the Quarkus source code application. Note the parameters `minikube.ip` and `namespace` are usable only for Minikube.
+    ```bash
+    ./mvnw install -DskipTests -Dminikube.ip=$(minikube ip) -Dnamespace=keycloak-namespace
+    ```
+5. Build the Docker image and push to a registry so it is available for the Kubernetes cluster. 
+    For Minikube execute the following:
+    ```bash
+    eval $(minikube docker-env) && docker build . -t quarkus-oidc-extension:1.0.0-SNAPSHOT -f src/main/docker/Dockerfile.jvm
+    ```
+6. Deploy the Quarkus application to Kubernetes. This step creates a Kubernetes Deployment, Service and Ingress for the Quarkus application. Note the Kubernetes resources are automatically created by the Quarkus Kubernetes extension in step 3.
+    ```bash
+    kubectl -n keycloak-namespace apply -f quarkus-oidc-extension/target/kubernetes/kubernetes.yml
+    ```
+7. Change directory back to the root of the project.
+    ```bash
+    cd ..
+    ```
+
+#### Validate Quarkus deployment
+
+Quarkus application contains 2 endpoint `/user` and `/admin`. Both are secured by Keycloak and require a valid token to access. 
+`/user` is accessible by users with role `user` and `/admin` is accessible by users with role `admin`. 
+You can change the endpoint and the used token in the following command to test the access.
+```bash
+curl -i "http://$(kubectl -n keycloak-namespace get ingress/quarkus-oidc-extension -o jsonpath='{.spec.rules[0].host}')/user" --header "Authorization: Bearer $USER_TOKEN"
+```
+
+Expected output is:
+
+```bash
+HTTP/1.1 200 OK
+Date: Tue, 02 Jul 2024 18:12:32 GMT
+Content-Type: text/plain;charset=UTF-8
+Content-Length: 49
+Connection: keep-alive
+Cache-Control: no-cache
+
+Hello from Quarkus user endpoint: User The First!% 
+```
