@@ -20,9 +20,8 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 
+import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.resteasy.reactive.NoCache;
-
-import io.quarkus.security.identity.SecurityIdentity;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
@@ -31,12 +30,12 @@ import io.quarkus.security.identity.SecurityIdentity;
 public class UsersResource {
 
     @Inject
-    SecurityIdentity identity;
+    private JsonWebToken jwt;
 
     @GET
     @RolesAllowed("user")
     @NoCache
     public String me() {
-        return "Hello from Quarkus for " + identity.getPrincipal().getName();
+        return "Hello from Quarkus user endpoint: " + jwt.getClaim("name") + "!";
     }
 }

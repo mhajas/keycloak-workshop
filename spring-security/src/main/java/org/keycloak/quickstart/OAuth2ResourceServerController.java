@@ -17,19 +17,21 @@ package org.keycloak.quickstart;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@CrossOrigin(origins = {"http://localhost:8080", "http://javascript-react.${namespace}.${minikube.ip}.nip.io"})
 public class OAuth2ResourceServerController {
 
 	@GetMapping("/")
 	public String index(@AuthenticationPrincipal Jwt jwt) {
-		return String.format("Hello, %s!", jwt.getClaimAsString("preferred_username"));
+		return String.format("Hello from SpringBoot user endpoint: %s!", jwt.getClaimAsString("name"));
 	}
 
 	@GetMapping("/protected/premium")
 	public String premium(@AuthenticationPrincipal Jwt jwt) {
-		return String.format("Hello, %s!", jwt.getClaimAsString("preferred_username"));
+		return String.format("Hello from SpringBoot admin endpoint: %s!", jwt.getClaimAsString("name"));
 	}
 }

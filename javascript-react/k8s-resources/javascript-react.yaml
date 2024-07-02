@@ -1,6 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  annotations:
+    checksum/config: ${CHECKSUM}
   name: javascript-react
   labels:
     app: javascript-react
@@ -11,6 +13,8 @@ spec:
       app: javascript-react
   template:
     metadata:
+      annotations:
+        checksum/config: ${CHECKSUM}
       labels:
         app: javascript-react
     spec:
@@ -20,12 +24,20 @@ spec:
         ports:
         - containerPort: 8080
         env:
-        - name: KC_URL
+        - name: REACT_APP_KEYCLOAK_URL
           value: https://keycloak.${NAMESPACE}.${MINIKUBE_IP}.nip.io
+        - name: REACT_APP_QUARKUS_URL
+          value: http://quarkus-oidc-extension.${NAMESPACE}.${MINIKUBE_IP}.nip.io
+        - name: REACT_APP_SPRINGBOOT_URL
+          value: http://spring-security.${NAMESPACE}.${MINIKUBE_IP}.nip.io
 ---
 apiVersion: v1
 kind: Service
 metadata:
+  annotations:
+    checksum/config: ${CHECKSUM}
+  labels:
+    app: javascript-react
   name: javascript-react-service
 spec:
   ports:
@@ -40,6 +52,8 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  annotations:
+    checksum/config: ${CHECKSUM}
   labels:
     app: javascript-react
   name: javascript-react

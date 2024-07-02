@@ -1,21 +1,24 @@
 import React from "react";
 import {NavLink} from "react-router-dom";
-import keycloak from "../Keycloak";
+import {useKeycloak} from "@react-keycloak/web";
 
 const Nav = () => {
+    const { keycloak } = useKeycloak();
+
     return (
-        <div>
-            <NavLink to="/">
+        <div style={{margin: "15px"}}>
+            <NavLink style={{marginRight: "15px"}} to="/">
                 <button>Home</button>
             </NavLink>
             {
                 keycloak.hasRealmRole("admin")
                 &&
-                <NavLink to="/secured">
+                <NavLink style={{marginRight: "15px"}} to="/secured">
                     <button>Admin Page</button>
                 </NavLink>
             }
-            <button onClick={() => keycloak.logout()}>Logout</button>
+            <button style={{marginRight: "15px"}} onClick={() => keycloak.updateToken(9999999999)}>Refresh token</button>
+            <button style={{marginRight: "15px"}} onClick={() => keycloak.logout()}>Logout</button>
             <span>Logged in as {keycloak.idTokenParsed.preferred_username}</span>
             <hr/>
         </div>

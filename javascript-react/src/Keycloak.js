@@ -1,7 +1,7 @@
 import Keycloak from 'keycloak-js'
 
 const keycloakConfig = {
-    url: 'https://keycloak.keycloak-namespace.192.168.49.2.nip.io/',
+    url: process.env.REACT_APP_KEYCLOAK_URL,
     realm: 'riviera-dev-realm',
     clientId: 'javascript-react',
 }

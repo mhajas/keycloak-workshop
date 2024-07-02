@@ -115,13 +115,13 @@ tasks:
     dir: javascript-react
     cmds:
       - eval $(minikube docker-env) && docker build -t javascript-react:1.0.0-SNAPSHOT .
-      - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < k8s-resources/javascript-react.yaml | kubectl -n {{.NAMESPACE}} apply -f - 
+      - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} CHECKSUM=$(find src -type f -exec sha256sum {} \; | sha256sum | awk '{ print $1 }') envsubst < k8s-resources/javascript-react.yaml | kubectl -n {{.NAMESPACE}} apply -f - 
 
   spring-security-deploy:
     dir: spring-security
     cmds:
       - eval $(minikube docker-env) && ./mvnw spring-boot:build-image -DskipTests -Dminikube.ip={{.MINIKUBE_IP}} -Dnamespace={{.NAMESPACE}}
-      - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < k8s-resources/deployment.yaml | kubectl -n {{.NAMESPACE}} apply -f - 
+      - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} CHECKSUM=$(sha256sum target/spring-security-1.0.0-SNAPSHOT.jar | awk '{ print $1 }') envsubst < k8s-resources/deployment.yaml | kubectl -n {{.NAMESPACE}} apply -f - 
 
     
 
