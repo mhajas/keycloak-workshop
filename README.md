@@ -1,6 +1,9 @@
-# Keycloak Kuberentes workshop
+# Keycloak K8s workshop
 
-This workshop provides an example of how to deploy a Keycloak server on Kubernetes and use it to secure a Quarkus API, SpringBoot API and a React frontend.
+This workshop provides an example of how to deploy a Keycloak server on Kubernetes and use it to secure the following applications
+- Quarkus with OIDC extension
+- SpringBoot with spring-security
+- React frontend that communicates with both backend applications
 
 It provides two ways on how to follow instructions:
 
@@ -150,7 +153,7 @@ task quarkus-deploy-all
 
 1. Move `i-trust-keycloak.jks` to `quarkus-oidc-extension/src/main/resources` directory.
     ```bash
-    mv i-trust-keycloak.jks quarkus-oidc-extension/src/main/resources
+    cp i-trust-keycloak.jks quarkus-oidc-extension/src/main/resources
     ```
 2. Change directory to quarkus-oid-extension.
     ```bash
@@ -160,7 +163,8 @@ task quarkus-deploy-all
     - configure [Quarkus Kubernetes extension](https://quarkus.io/guides/deploying-to-kubernetes) to use correct image where you plan to push the Docker image that will be built in the following step. 
     - Configure Ingress host [here](https://github.com/mhajas/keycloak-workshop/blob/c585f0dca499b0b5d3d9a521c36a626ea649159a/quarkus-oidc-extension/src/main/resources/application.properties#L9-L16) to match the correct host.
     - Configure [quarkus.oidc.auth-server-url](https://github.com/mhajas/keycloak-workshop/blob/c585f0dca499b0b5d3d9a521c36a626ea649159a/quarkus-oidc-extension/src/main/resources/application.properties#L2C22-L2C30) to point to `$KEYCLOAK_URL/realms/riviera-dev-realm`.
-4. Build the Quarkus source code application. Note the parameters `minikube.ip` and `namespace` are usable only for Minikube.
+    - Configure [`quarkus.http.cors.origins`](https://github.com/mhajas/keycloak-workshop/blob/c585f0dca499b0b5d3d9a521c36a626ea649159a/quarkus-oidc-extension/src/main/resources/application.properties#L19C3-L19C26) to match the host of the javascript-react application.
+4. Build the Quarkus source code application. Note the parameters `minikube.ip` and `namespace` are usable only for Minikube and .
     ```bash
     ./mvnw install -DskipTests -Dminikube.ip=$(minikube ip) -Dnamespace=keycloak-namespace
     ```
@@ -198,4 +202,63 @@ Connection: keep-alive
 Cache-Control: no-cache
 
 Hello from Quarkus user endpoint: User The First!% 
+```
+
+### Deploying SpringBoot with spring-security
+
+This step deploys a SpringBoot application with spring-security that is secured by Keycloak.
+
+#### [Automated]
+
+```bash
+task spring-security-deploy
+```
+
+#### [Manual]
+
+1. If you are not using Minikube, it is necessary to do some configuration changes. 
+    - Use `KEYCLOAK_URL` in [here](https://github.com/mhajas/keycloak-workshop/blob/6fed3983afef7caabd05a660f91f78cd3b0dca91/spring-security/src/main/resources/application.yml#L6) and [here](https://github.com/mhajas/keycloak-workshop/blob/6fed3983afef7caabd05a660f91f78cd3b0dca91/spring-security/src/main/resources/policy-enforcer.json#L3).
+    - Configure CORS origins to contain url of `javascript-react` application [here](https://github.com/mhajas/keycloak-workshop/blob/6fed3983afef7caabd05a660f91f78cd3b0dca91/spring-security/src/main/java/org/keycloak/quickstart/OAuth2ResourceServerController.java#L25).
+2. Build the SpringBoot application. Note the parameters `minikube.ip` and `namespace` are usable only for Minikube and replace all configuration steps above. This step also builds the Docker image.
+    ```bash
+    cd spring-security && eval $(minikube docker-env) && ./mvnw spring-boot:build-image -DskipTests -Dminikube.ip=$(minikube ip) -Dnamespace=keycloak-namespace
+    ```
+3. Configure host for Ingress [here](https://github.com/mhajas/keycloak-workshop/blob/6fed3983afef7caabd05a660f91f78cd3b0dca91/spring-security/k8s-resources/spring-security.yaml#L66).
+4. This application also need to trust Keycloak certificate and therefore we need to configure truststore. The application expects the truststore to be present in a Kubernetes Secret with name `i-trust-keycloak-secret`. Create it using the following command.
+    ```bash
+    kubectl -n keycloak-namespace create secret generic i-trust-keycloak-secret --from-file=i-trust-keycloak.jks
+    ```
+5. Create the Kubernetes resources for the SpringBoot application. This step creates a Kubernetes Deployment, Service.
+    ```bash
+    kubectl -n keycloak-namespace apply -f spring-security/k8s-resources/spring-security.yaml
+    ```
+
+#### Validate SpringBoot deployment
+
+Spring-security application contains 2 endpoints `/` and `/protected/premium`. Both are secured by Keycloak and require a valid token to access.
+`/` is accessible by users with role `user` and `/protected/premium` is accessible by users with role `admin`.
+You can change the endpoint and the used token in the following command to test the access.
+```bash
+curl -i "http://$(kubectl -n keycloak-namespace get ingress/spring-security -o jsonpath='{.spec.rules[0].host}')/" --header "Authorization: Bearer $USER_TOKEN"
+```
+
+Expected output is:
+
+```bash
+HTTP/1.1 200 
+Date: Wed, 03 Jul 2024 11:31:27 GMT
+Content-Type: text/plain;charset=UTF-8
+Content-Length: 52
+Connection: keep-alive
+Vary: Origin
+Vary: Access-Control-Request-Method
+Vary: Access-Control-Request-Headers
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+
+Hello from SpringBoot user endpoint: User The First!% 
 ```

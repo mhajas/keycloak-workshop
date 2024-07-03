@@ -100,7 +100,7 @@ tasks:
   quarkus-deploy-all:
     desc: "Prepare and deploy Quarkus app"
     cmds:
-      - cp -rf .task/i-trust-keycloak.jks quarkus-oidc-extension/src/main/resources/
+      - cp .task/i-trust-keycloak.jks quarkus-oidc-extension/src/main/resources/
       - task: quarkus-build-sources
       - task: quarkus-build-docker
       - kubectl -n {{.NAMESPACE}} apply -f quarkus-oidc-extension/target/kubernetes/kubernetes.yml
