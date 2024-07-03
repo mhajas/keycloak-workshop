@@ -105,13 +105,6 @@ tasks:
       - task: quarkus-build-docker
       - kubectl -n {{.NAMESPACE}} apply -f quarkus-oidc-extension/target/kubernetes/kubernetes.yml
 
-
-  javascript-simple-deploy:
-    dir: javascript-simple
-    cmds:
-      - eval $(minikube docker-env) && docker build -t javascript-simple:1.0.0-SNAPSHOT .
-      - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < k8s-resources/javascript-simple.yaml | kubectl -n {{.NAMESPACE}} apply -f - 
-
   javascript-react-deploy:
     desc: "Deploy React frontend application that communicates with Quarkus and SpringBoot apps"
     dir: javascript-react

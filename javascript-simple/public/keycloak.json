@@ -1,7 +1,0 @@
-{
-  "realm": "riviera-dev-realm",
-  "auth-server-url": "${KC_URL}",
-  "ssl-required": "external",
-  "resource": "javascript-simple",
-  "public-client": true
-}
