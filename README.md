@@ -255,7 +255,7 @@ task spring-security-deploy
      | kubectl -n keycloak-namespace apply -f - 
 
      ```
-   - For other Kubernetes clusters replace all occurrences of `# Replace with ...` comment and execute the following command.
+   - For other Kubernetes clusters replace all occurrences of `# Replace with ...` comment in `spring-security/k8s-resources/spring-security.yaml` and execute the following command.
      ```bash
      kubectl -n keycloak-namespace apply -f spring-security/k8s-resources/spring-security.yaml
      ```
@@ -289,3 +289,47 @@ X-Frame-Options: DENY
 
 Hello from SpringBoot user endpoint: User The First!% 
 ```
+
+### Deploying React frontend application
+
+This step deploys a React frontend application that communicates with both backend applications.
+
+#### [Automated]
+
+```bash
+task javascript-react-deploy
+```
+
+#### [Manual]
+
+1. Build Docker image containing the React application.
+   - For Minikube.
+     ```bash
+     cd javascript-react && eval $(minikube docker-env) && docker build -t javascript-react:1.0.0-SNAPSHOT .
+     ```
+   - For other Kubernetes clusters, build the image and push it to the registry that is accessible by the Kubernetes cluster.
+     ```bash
+     cd javascript-react && docker build -t javascript-react:1.0.0-SNAPSHOT .
+     ```
+2. Create the Kubernetes resources for the React application. This step creates a Kubernetes Deployment, Service and Ingress.
+   - For Minikube execute the following command. Note, thanks to `CHECKSUM` you can rebuild the image, execute the following command again and the pod will be automatically restarted.
+     ```bash
+     cd javascript-react && \
+     NAMESPACE=keycloka-namespace MINIKUBE_IP=$(minikube ip) \
+     CHECKSUM=$(find src -type f -exec sha256sum {} \; | sha256sum | awk '{ print $1 }') \
+     envsubst < k8s-resources/javascript-react.yaml | kubectl -n kubernetes-namespace apply -f - 
+     ```
+   - For other Kubernetes clusters replace all occurrences of `# Replace with ...` comment in `javascript-react/k8s-resources/javascript-react.yaml` and execute the following command.
+     ```bash
+     kubectl -n keycloak-namespace apply -f javascript-react/k8s-resources/javascript-react.yaml
+     ```
+     
+#### Validate React deployment
+
+React application is accessible on the URL printed by the following command.
+```bash
+echo "Access React application on http://$(kubectl -n keycloak-namespace get ingress/javascript-react -o jsonpath='{.spec.rules[0].host}')"
+```
+After accessing the app you should be redirected to Keycloak login page. After successful login (with users `user` or `admin`), you should be redirected back to the React application where you can see responses from Quarkus and SpringBoot applications.
+
+![Javascript react screenshot](./images/javascript-react.png)

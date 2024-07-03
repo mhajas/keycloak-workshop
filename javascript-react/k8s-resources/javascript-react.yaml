@@ -20,16 +20,16 @@ spec:
     spec:
       containers:
       - name: nodeserver
-        image: javascript-react:1.0.0-SNAPSHOT 
+        image: javascript-react:1.0.0-SNAPSHOT # Replace with JAVASCRIPT_REACT image
         ports:
         - containerPort: 8080
         env:
         - name: REACT_APP_KEYCLOAK_URL
-          value: https://keycloak.${NAMESPACE}.${MINIKUBE_IP}.nip.io
+          value: https://keycloak.${NAMESPACE}.${MINIKUBE_IP}.nip.io # Replace with KEYCLOAK_URL
         - name: REACT_APP_QUARKUS_URL
-          value: http://quarkus-oidc-extension.${NAMESPACE}.${MINIKUBE_IP}.nip.io
+          value: http://quarkus-oidc-extension.${NAMESPACE}.${MINIKUBE_IP}.nip.io # Replace with QUARKUS_OIDC_EXTENSION_URL
         - name: REACT_APP_SPRINGBOOT_URL
-          value: http://spring-security.${NAMESPACE}.${MINIKUBE_IP}.nip.io
+          value: http://spring-security.${NAMESPACE}.${MINIKUBE_IP}.nip.io # Replace with SPRING_SECURITY_URL
 ---
 apiVersion: v1
 kind: Service
@@ -59,7 +59,7 @@ metadata:
   name: javascript-react
 spec:
   rules:
-    - host: javascript-react.${NAMESPACE}.${MINIKUBE_IP}.nip.io
+    - host: javascript-react.${NAMESPACE}.${MINIKUBE_IP}.nip.io # Replace with JAVASCRIPT_REACT_URL
       http:
         paths:
           - backend:

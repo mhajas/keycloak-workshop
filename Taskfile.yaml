@@ -113,12 +113,14 @@ tasks:
       - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < k8s-resources/javascript-simple.yaml | kubectl -n {{.NAMESPACE}} apply -f - 
 
   javascript-react-deploy:
+    desc: "Deploy React frontend application that communicates with Quarkus and SpringBoot apps"
     dir: javascript-react
     cmds:
       - eval $(minikube docker-env) && docker build -t javascript-react:1.0.0-SNAPSHOT .
       - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} CHECKSUM=$(find src -type f -exec sha256sum {} \; | sha256sum | awk '{ print $1 }') envsubst < k8s-resources/javascript-react.yaml | kubectl -n {{.NAMESPACE}} apply -f - 
 
   spring-security-deploy:
+    desc: "Deploy SpringBoot application that uses Keycloak for authentication"
     dir: spring-security
     cmds:
       - eval $(minikube docker-env) && ./mvnw spring-boot:build-image -DskipTests -Dminikube.ip={{.MINIKUBE_IP}} -Dnamespace={{.NAMESPACE}}
