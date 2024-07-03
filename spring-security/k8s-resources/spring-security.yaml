@@ -20,7 +20,7 @@ spec:
         app: spring-security
     spec:
       containers:
-      - image: spring-security:1.0.0-SNAPSHOT
+      - image: spring-security:1.0.0-SNAPSHOT # Replace with actual Docker image in a registry
         name: spring-security
         resources: {}
         volumeMounts:
@@ -63,7 +63,7 @@ metadata:
   name: spring-security
 spec:
   rules:
-    - host: spring-security.${NAMESPACE}.${MINIKUBE_IP}.nip.io
+    - host: spring-security.${NAMESPACE}.${MINIKUBE_IP}.nip.io # Replace with SPRING_SECURITY_URL
       http:
         paths:
           - backend:

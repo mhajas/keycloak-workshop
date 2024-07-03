@@ -19,7 +19,10 @@ All steps are automated. This can be used to quickly setup the environment witho
 
 ## Manual deployment
 
-All steps are done manually and are described in this guide.
+All steps are done manually and are described in this guide. 
+It is recommended to use Minikube for manual deployment as well as it is easier to configure all configurations like Ingress and realm configuration because we assume the app hosts are in form of `app-name.${namespace}.${minikube-ip}.nip.io`. 
+It should be possible to use the steps with any Kubernetes cluster, however, you need to replace hosts manually everywhere.
+Each place that needs the change should be mentioned in the guide.
 
 ### Prerequisites
 - OpenSSL for creating certificates
@@ -71,9 +74,10 @@ task keycloak-deploy-all
     kubectl -n keycloak-namespace apply -f https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/refs/tags/25.0.1/kubernetes/keycloakrealmimports.k8s.keycloak.org-v1.yml
     kubectl -n keycloak-namespace apply -f https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/refs/tags/25.0.1/kubernetes/kubernetes.yml
     ```
-3. Deploy Postgres database - this deploys PostgreSQL database that will be used as Keycloak storage 
+3. Deploy Postgres database - this deploys PostgreSQL database that will be used as Keycloak storage. Also, create Kubernetes Secret with the database credentials.
     ```bash
     kubectl -n keycloak-namespace apply -f keycloak/k8s-resources/postgres.yaml
+    kubectl -n keycloak-namespace create secret generic keycloak-db-secret --from-literal=username=testuser --from-literal=password=testpassword
     ```
 4. We will configure TLS for Keycloak and therefore, we need to create a Kubernetes Secret with a certificate and a key.
     1. Create a self-signed certificate using OpenSSL, for this step it is necessary to replace `KEYCLOAK_URL` and `KEYCLOAK_IP` with actual values. For Minikube the values are: `KEYCLOAK_URL`=`keycloak.keycloak-namespace.$(minikube ip).nip.io` and `KEYCLOAK_IP`=`$(minikube ip)`.
@@ -89,10 +93,15 @@ task keycloak-deploy-all
          openssl x509 -outform der -in keycloak_certificate.pem -out keycloak_certificate.der
          keytool -import -alias KEYCLOAK_URL -keystore i-trust-keycloak.jks -file keycloak_certificate.der -storepass password -noprompt
          ```
-5. Deploy Keycloak server. File `keycloak/k8s-resources/keycloak.yaml` need to be changed to contain hostname that will be used for accessing Keycloak. It needs to be the same as the one specified when creating the certificate above. Look for the comment `# REPLACE WITH KEYCLOAK_URL`. Then execute the following command:
-    ```bash
-    kubectl -n keycloak-namespace apply -f keycloak/k8s-resources/keycloak.yaml
-    ```
+5. Deploy Keycloak server to Kubernetes. Before deploying, the file `keycloak/k8s-resources/keycloak.yaml` needs to contain correct Keycloak host.
+   - For Minikube, replace hosts using `envsubst` command using the following.
+     ```bash
+     NAMESPACE=keycloak-namespace MINIKUBE_IP=$(minikube ip) envsubst < keycloak/k8s-resources/keycloak.yaml | kubectl -n keycloak-namespace apply -f -
+     ```
+   - For other Kubernetes clusters, replace host manually in the file `keycloak/k8s-resources/keycloak.yaml` on line with comment `REPLACE WITH KEYCLOAK_URL`.
+     ```bash
+     kubectl -n keycloak-namespace apply -f keycloak/k8s-resources/keycloak.yaml
+     ```
 6. Wait until Keycloak is ready. You can use the following command that will do the waiting for you.
     ```bash
     kubectl -n keycloak-namespace wait --for=condition=Ready --timeout=180s keycloaks.k8s.keycloak.org/keycloak-riviera-dev
@@ -107,11 +116,17 @@ task keycloak-deploy-all
    - Roles `admin` and `user`
    - Users `admin` (with roles `user` and `admin`) and `user` (with role `user`) with passwords `admin` and `user`.
    
-   Keycloak needs to be aware of locations of each application it is securing, therefore the file `keycloak/k8s-resources/keycloak-realm-import.yaml` needs to be updated with the actual URLs (Note this step can be done later in the Keycloak admin console). Look for the comment `# REPLACE WITH APPLICATION_URL` and replace the URLs with actual values. Note the comment sometimes contains information to append `/*` to the URL. 
+   Keycloak needs to be aware of locations of each application it is securing, therefore the file `keycloak/k8s-resources/keycloak-realm-import.yaml` needs to be updated with the actual URLs.
+
+   - For Minikube execute the following command.
+     ```bash
+     NAMESPACE=keycloak-namespace MINIKUBE_IP=$(minikube ip) envsubst < keycloak/k8s-resources/keycloak-realm-import.yaml | kubectl -n keycloak-namespace apply -f -
+     ```
+   - For the other Kubernetes clusters update URLs manually. Note this step can be done later in the Keycloak admin console. Look for the comment `# REPLACE WITH [APPLICATION]_URL` and replace the URLs with actual values. Note the comment sometimes contains information to append `/*` to the URL. 
    Then execute the following command:
-    ```bash
-    kubectl -n keycloak-namespace apply -f keycloak/k8s-resources/keycloak-realm-import.yaml
-    ```
+     ```bash
+     kubectl -n keycloak-namespace apply -f keycloak/k8s-resources/keycloak-realm-import.yaml
+     ```
    
 #### Validate Keycloak deployment
 
@@ -219,19 +234,31 @@ task spring-security-deploy
 1. If you are not using Minikube, it is necessary to do some configuration changes. 
     - Use `KEYCLOAK_URL` in [here](https://github.com/mhajas/keycloak-workshop/blob/6fed3983afef7caabd05a660f91f78cd3b0dca91/spring-security/src/main/resources/application.yml#L6) and [here](https://github.com/mhajas/keycloak-workshop/blob/6fed3983afef7caabd05a660f91f78cd3b0dca91/spring-security/src/main/resources/policy-enforcer.json#L3).
     - Configure CORS origins to contain url of `javascript-react` application [here](https://github.com/mhajas/keycloak-workshop/blob/6fed3983afef7caabd05a660f91f78cd3b0dca91/spring-security/src/main/java/org/keycloak/quickstart/OAuth2ResourceServerController.java#L25).
-2. Build the SpringBoot application. Note the parameters `minikube.ip` and `namespace` are usable only for Minikube and replace all configuration steps above. This step also builds the Docker image.
-    ```bash
-    cd spring-security && eval $(minikube docker-env) && ./mvnw spring-boot:build-image -DskipTests -Dminikube.ip=$(minikube ip) -Dnamespace=keycloak-namespace
-    ```
-3. Configure host for Ingress [here](https://github.com/mhajas/keycloak-workshop/blob/6fed3983afef7caabd05a660f91f78cd3b0dca91/spring-security/k8s-resources/spring-security.yaml#L66).
-4. This application also need to trust Keycloak certificate and therefore we need to configure truststore. The application expects the truststore to be present in a Kubernetes Secret with name `i-trust-keycloak-secret`. Create it using the following command.
+2. Build the SpringBoot application. Note this step also builds the Docker image.
+   - For Minikube execute the following command.
+     ```bash
+     cd spring-security && eval $(minikube docker-env) && ./mvnw spring-boot:build-image -DskipTests -Dminikube.ip=$(minikube ip) -Dnamespace=keycloak-namespace
+     ```
+   - For other Kubernetes clusters, adjust the configuration based on the step 1., execute the following command and push the built image to the registry that is accessible by the Kubernetes cluster.
+     ```bash
+     cd spring-security && ./mvnw spring-boot:build-image -DskipTests
+     ```
+3. This application also needs to trust Keycloak certificate and therefore we need to configure truststore. The application expects the truststore to be present in a Kubernetes Secret with name `i-trust-keycloak-secret`. Create it using the following command.
     ```bash
     kubectl -n keycloak-namespace create secret generic i-trust-keycloak-secret --from-file=i-trust-keycloak.jks
     ```
-5. Create the Kubernetes resources for the SpringBoot application. This step creates a Kubernetes Deployment, Service.
-    ```bash
-    kubectl -n keycloak-namespace apply -f spring-security/k8s-resources/spring-security.yaml
-    ```
+4. Create the Kubernetes resources for the SpringBoot application. This step creates a Kubernetes Deployment, Service.
+   - For Minikube execute the following command. Note, thanks to `CHECKSUM` you can rebuild the image, execute the following command again and the pod will be automatically restarted.
+     ```bash
+     NAMESPACE=keycloak-namespace MINIKUBE_IP=$(minikube ip) CHECKSUM=$(sha256sum spring-security/target/spring-security-1.0.0-SNAPSHOT.jar | awk '{ print $1 }') \
+     envsubst < spring-security/k8s-resources/spring-security.yaml \
+     | kubectl -n keycloak-namespace apply -f - 
+
+     ```
+   - For other Kubernetes clusters replace all occurrences of `# Replace with ...` comment and execute the following command.
+     ```bash
+     kubectl -n keycloak-namespace apply -f spring-security/k8s-resources/spring-security.yaml
+     ```
 
 #### Validate SpringBoot deployment
 
