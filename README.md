@@ -116,7 +116,7 @@ task keycloak-deploy-all
      ```
    - For other Kubernetes clusters replace `KEYCLOAK_URL` manually in the file `keycloak/k8s-resources/keycloak-ingress-tls-patch.yaml` and execute the following command.
      ```bash
-     kubectl -n keycloak-namespace apply -f keycloak/k8s-resources/keycloak-ingress-tls-patch.yaml
+     kubectl -n keycloak-namespace patch ingress keycloak-riviera-dev-ingress --patch-file keycloak/k8s-resources/keycloak-ingress-tls-patch.yaml
      ```
 8. Create Keycloak realm with all necessary resources. This step creates:
    - Realm `riviera-dev-realm`
