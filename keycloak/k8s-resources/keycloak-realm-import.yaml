@@ -34,7 +34,7 @@ spec:
       enabled: true
       alwaysDisplayInConsole: false
       clientAuthenticatorType: client-secret
-      secret: "1LZ65XcapsfnwEOLsByUW7KKv05mGsZF"
+      secret: "1LZ65XcapsfnwEOLsByUW7KKv05mGsZF" # notsecret
       redirectUris:
       - http://quarkus-oidc-extension.${NAMESPACE}.${MINIKUBE_IP}.nip.io/* # REPLACE WITH QUARKUS_URL and append /*
       notBefore: 0
@@ -163,7 +163,7 @@ spec:
       bearerOnly: false
       redirectUris:
       - 'https://spring-security.${NAMESPACE}.${MINIKUBE_IP}.nip.io/*' # REPLACE WITH SPRING_SECURITY_URL and append /*
-      secret: Sj9DAvEG61ehuKIsj16PQpE34bk6Y4zq
+      secret: Sj9DAvEG61ehuKIsj16PQpE34bk6Y4zq # notsecret
       authorizationServicesEnabled: true
       directAccessGrantsEnabled: true
       authorizationSettings:

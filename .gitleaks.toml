@@ -1,0 +1,10 @@
+[allowlist]
+  description = "Global Allowlist"
+
+  paths = [
+    # Ignore Quarkus application.properties file
+    '''quarkus-oidc-extension\/src\/main\/resources\/application.properties'''    
+    
+    # Ignore SpringBoot policy-enforcer.json file
+    '''spring-security\/src\/main\/resources\/policy-enforcer.json'''
+  ]
