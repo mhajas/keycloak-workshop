@@ -82,7 +82,9 @@ task keycloak-deploy-all
 4. We will configure TLS for Keycloak and therefore, we need to create a Kubernetes Secret with a certificate and a key.
     1. Create a self-signed certificate using OpenSSL, for this step it is necessary to replace `KEYCLOAK_URL` and `KEYCLOAK_IP` with actual values. For Minikube the values are: `KEYCLOAK_URL`=`keycloak.keycloak-namespace.$(minikube ip).nip.io` and `KEYCLOAK_IP`=`$(minikube ip)`.
        ```bash
-       openssl req -subj '/CN=KEYCLOAK_URL/O=Test Keycloak./C=US' -addext "subjectAltName = IP:KEYCLOAK_IP, DNS:KEYCLOAK_URL" -newkey rsa:2048 -nodes -keyout keycloak_key.pem -x509 -days 365 -out keycloak_certificate.pem
+       export KEYCLOAK_IP=$(minikube ip)
+       export KEYCLOAK_URL=keycloak.keycloak-namespace.${KEYCLOAK_IP}.nip.io
+       openssl req -subj "/CN=${KEYCLOAK_URL}/O=Test Keycloak./C=US" -addext "subjectAltName = IP:${KEYCLOAK_IP}, DNS:${KEYCLOAK_URL}" -newkey rsa:2048 -nodes -keyout keycloak_key.pem -x509 -days 365 -out keycloak_certificate.pem
        ```
     2. Create a Kubernetes Secret with the certificate and key. Note that `keycloak-tls-secret` is the name of the secret that will be used in the Keycloak deployment later.
        ```bash
@@ -91,7 +93,7 @@ task keycloak-deploy-all
     3. Later in the workshop, we need to configure applications to trust this certificate, therefore we will prepare JKS truststore named `i-trust-keycloak.jks`. Note `KEYCLOAK_URL` is the same as in the previous step.
          ```bash
          openssl x509 -outform der -in keycloak_certificate.pem -out keycloak_certificate.der
-         keytool -import -alias KEYCLOAK_URL -keystore i-trust-keycloak.jks -file keycloak_certificate.der -storepass password -noprompt
+         keytool -import -alias ${KEYCLOAK_URL} -keystore i-trust-keycloak.jks -file keycloak_certificate.der -storepass password -noprompt
          ```
 5. Deploy Keycloak server to Kubernetes. Before deploying, the file `keycloak/k8s-resources/keycloak.yaml` needs to contain correct Keycloak host.
    - For Minikube, replace hosts using `envsubst` command using the following.
@@ -107,9 +109,15 @@ task keycloak-deploy-all
     kubectl -n keycloak-namespace wait --for=condition=Ready --timeout=180s keycloaks.k8s.keycloak.org/keycloak-riviera-dev
     ```
 7. This workshop assumes there is no TLS termination on the proxy configured. At the moment, there seems to be a bug in Minikube and therefore we need to use a workaround to make Ingress advertise the correct certificate by the following command. Make sure you replace `KEYCLOAK_URL` the same way as in the previous steps.
-    ```bash
-    kubectl -n keycloak-namespace apply -f keycloak/k8s-resources/keycloak-ingress-tls-patch.yaml
-    ```
+   - For Minikube execute the following command.
+     ```bash
+     NAMESPACE=keycloak-namespace MINIKUBE_IP=$(minikube ip) envsubst < keycloak/k8s-resources/keycloak-ingress-tls-patch.yaml > ingress-patch-replaced.yaml
+     kubectl -n keycloak-namespace patch ingress keycloak-riviera-dev-ingress --patch-file ingress-patch-replaced.yaml
+     ```
+   - For other Kubernetes clusters replace `KEYCLOAK_URL` manually in the file `keycloak/k8s-resources/keycloak-ingress-tls-patch.yaml` and execute the following command.
+     ```bash
+     kubectl -n keycloak-namespace apply -f keycloak/k8s-resources/keycloak-ingress-tls-patch.yaml
+     ```
 8. Create Keycloak realm with all necessary resources. This step creates:
    - Realm `riviera-dev-realm`
    - Clients for all application we will use in this workshop
@@ -190,7 +198,7 @@ task quarkus-deploy-all
     ```
 6. Deploy the Quarkus application to Kubernetes. This step creates a Kubernetes Deployment, Service and Ingress for the Quarkus application. Note the Kubernetes resources are automatically created by the Quarkus Kubernetes extension in step 3.
     ```bash
-    kubectl -n keycloak-namespace apply -f quarkus-oidc-extension/target/kubernetes/kubernetes.yml
+    kubectl -n keycloak-namespace apply -f target/kubernetes/kubernetes.yml
     ```
 7. Change directory back to the root of the project.
     ```bash
@@ -234,31 +242,38 @@ task spring-security-deploy
 1. If you are not using Minikube, it is necessary to do some configuration changes. 
     - Use `KEYCLOAK_URL` in [here](https://github.com/mhajas/keycloak-workshop/blob/6fed3983afef7caabd05a660f91f78cd3b0dca91/spring-security/src/main/resources/application.yml#L6) and [here](https://github.com/mhajas/keycloak-workshop/blob/6fed3983afef7caabd05a660f91f78cd3b0dca91/spring-security/src/main/resources/policy-enforcer.json#L3).
     - Configure CORS origins to contain url of `javascript-react` application [here](https://github.com/mhajas/keycloak-workshop/blob/6fed3983afef7caabd05a660f91f78cd3b0dca91/spring-security/src/main/java/org/keycloak/quickstart/OAuth2ResourceServerController.java#L25).
-2. Build the SpringBoot application. Note this step also builds the Docker image.
+2. Change directory to spring-security.
+    ```bash
+    cd spring-security
+    ```
+3. Build the SpringBoot application. Note this step also builds the Docker image.
    - For Minikube execute the following command.
      ```bash
-     cd spring-security && eval $(minikube docker-env) && ./mvnw spring-boot:build-image -DskipTests -Dminikube.ip=$(minikube ip) -Dnamespace=keycloak-namespace
+     eval $(minikube docker-env) && ./mvnw spring-boot:build-image -DskipTests -Dminikube.ip=$(minikube ip) -Dnamespace=keycloak-namespace
      ```
    - For other Kubernetes clusters, adjust the configuration based on the step 1., execute the following command and push the built image to the registry that is accessible by the Kubernetes cluster.
      ```bash
-     cd spring-security && ./mvnw spring-boot:build-image -DskipTests
+     ./mvnw spring-boot:build-image -DskipTests
      ```
-3. This application also needs to trust Keycloak certificate and therefore we need to configure truststore. The application expects the truststore to be present in a Kubernetes Secret with name `i-trust-keycloak-secret`. Create it using the following command.
+4. This application also needs to trust Keycloak certificate and therefore we need to configure truststore. The application expects the truststore to be present in a Kubernetes Secret with name `i-trust-keycloak-secret`. Create it using the following command.
     ```bash
-    kubectl -n keycloak-namespace create secret generic i-trust-keycloak-secret --from-file=i-trust-keycloak.jks
+    kubectl -n keycloak-namespace create secret generic i-trust-keycloak-secret --from-file=../i-trust-keycloak.jks
     ```
-4. Create the Kubernetes resources for the SpringBoot application. This step creates a Kubernetes Deployment, Service.
+5. Create the Kubernetes resources for the SpringBoot application. This step creates a Kubernetes Deployment, Service.
    - For Minikube execute the following command. Note, thanks to `CHECKSUM` you can rebuild the image, execute the following command again and the pod will be automatically restarted.
      ```bash
-     NAMESPACE=keycloak-namespace MINIKUBE_IP=$(minikube ip) CHECKSUM=$(sha256sum spring-security/target/spring-security-1.0.0-SNAPSHOT.jar | awk '{ print $1 }') \
-     envsubst < spring-security/k8s-resources/spring-security.yaml \
-     | kubectl -n keycloak-namespace apply -f - 
-
+     NAMESPACE=keycloak-namespace MINIKUBE_IP=$(minikube ip) CHECKSUM=$(sha256sum target/spring-security-1.0.0-SNAPSHOT.jar | awk '{ print $1 }') \
+     envsubst < k8s-resources/spring-security.yaml \
+     | kubectl -n keycloak-namespace apply -f -
      ```
-   - For other Kubernetes clusters replace all occurrences of `# Replace with ...` comment in `spring-security/k8s-resources/spring-security.yaml` and execute the following command.
+   - For other Kubernetes clusters replace all occurrences of `# Replace with ...` comment in `k8s-resources/spring-security.yaml` and execute the following command.
      ```bash
-     kubectl -n keycloak-namespace apply -f spring-security/k8s-resources/spring-security.yaml
+     kubectl -n keycloak-namespace apply -f k8s-resources/spring-security.yaml
      ```
+6. Change directory back to the root of the project.
+    ```bash
+    cd ..
+    ```
 
 #### Validate SpringBoot deployment
 
@@ -302,27 +317,34 @@ task javascript-react-deploy
 
 #### [Manual]
 
+1. Change directory to javascript-react.
+    ```bash
+    cd javascript-react
+    ```
 1. Build Docker image containing the React application.
    - For Minikube.
      ```bash
-     cd javascript-react && eval $(minikube docker-env) && docker build -t javascript-react:1.0.0-SNAPSHOT .
+     eval $(minikube docker-env) && docker build -t javascript-react:1.0.0-SNAPSHOT .
      ```
    - For other Kubernetes clusters, build the image and push it to the registry that is accessible by the Kubernetes cluster.
      ```bash
-     cd javascript-react && docker build -t javascript-react:1.0.0-SNAPSHOT .
+     docker build -t javascript-react:1.0.0-SNAPSHOT .
      ```
 2. Create the Kubernetes resources for the React application. This step creates a Kubernetes Deployment, Service and Ingress.
    - For Minikube execute the following command. Note, thanks to `CHECKSUM` you can rebuild the image, execute the following command again and the pod will be automatically restarted.
      ```bash
-     cd javascript-react && \
-     NAMESPACE=keycloka-namespace MINIKUBE_IP=$(minikube ip) \
+     NAMESPACE=keyclok-namespace MINIKUBE_IP=$(minikube ip) \
      CHECKSUM=$(find src -type f -exec sha256sum {} \; | sha256sum | awk '{ print $1 }') \
      envsubst < k8s-resources/javascript-react.yaml | kubectl -n kubernetes-namespace apply -f - 
      ```
-   - For other Kubernetes clusters replace all occurrences of `# Replace with ...` comment in `javascript-react/k8s-resources/javascript-react.yaml` and execute the following command.
+   - For other Kubernetes clusters replace all occurrences of `# Replace with ...` comment in `k8s-resources/javascript-react.yaml` and execute the following command.
      ```bash
-     kubectl -n keycloak-namespace apply -f javascript-react/k8s-resources/javascript-react.yaml
+     kubectl -n keycloak-namespace apply -f k8s-resources/javascript-react.yaml
      ```
+3. Change directory back to the root of the project.
+    ```bash
+    cd ..
+    ```
      
 #### Validate React deployment
 

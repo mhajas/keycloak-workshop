@@ -1,5 +1,5 @@
 spec:
   tls:
   - hosts:
-    - keycloak.${NAMESPACE}.${MINIKUBE_IP}.nip.io # REPLACE WITH KEYCLOAK_URL
+    - keycloak.${NAMESPACE}.${MINIKUBE_IP}.nip.io # Replace with KEYCLOAK_URL
     secretName: keycloak-tls-secret

@@ -9,6 +9,10 @@ spec:
     realm: riviera-dev-realm
     displayName: 'Riviera Dev workshop'
     enabled: true
+    accessTokenLifespan: 18000
+    accessTokenLifespanForImplicitFlow: 18000
+    ssoSessionIdleTimeout: 1800
+    ssoSessionMaxLifespan: 36000
     roles:
       realm:
       - name: user
