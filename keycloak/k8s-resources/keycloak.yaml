@@ -23,3 +23,6 @@ spec:
   ingress:
     annotations:
       nginx.ingress.kubernetes.io/proxy-buffer-size: "8k"
+  additionalOptions:
+    - name: metrics-enabled
+      value: 'true'

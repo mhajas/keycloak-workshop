@@ -1,0 +1,14 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: cadvisor
+  namespace: cadvisor
+spec:
+  selector:
+    matchLabels:
+      app: cadvisor
+  podMetricsEndpoints:
+    - port: http
+      # cadvisor takes an increasing amount of time to gather all metrics (~10sec), which is the default scraping timeout
+      # increasing the timeout so that it doesn't time out. If the time increases, eventually limit it to a specific namespace only.
+      scrapeTimeout: '20s'

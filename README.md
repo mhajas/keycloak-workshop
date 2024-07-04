@@ -355,3 +355,57 @@ echo "Access React application on http://$(kubectl -n keycloak-namespace get ing
 After accessing the app you should be redirected to Keycloak login page. After successful login (with users `user` or `admin`), you should be redirected back to the React application where you can see responses from Quarkus and SpringBoot applications.
 
 ![Javascript react screenshot](./images/javascript-react.png)
+
+### Deploying Prometheus monitoring and Grafana
+
+This step deploys a new namespace `monitoring` that contains Prometheus and Grafana with some predefined dashboards.
+
+#### Prerequisites
+
+This step requires additional prerequisites:
+- Helm ([installation guide here](https://helm.sh/docs/intro/install/))
+
+#### [Automated]
+
+```bash
+task grafana-deploy
+```
+
+#### [Manual]
+
+1. Create a namespace for monitoring.
+    ```bash
+    kubectl create namespace monitoring
+    ```
+2. Add the Prometheus Helm repository.
+    ```bash
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    helm repo update
+    ```
+3. Install Prometheus and Grafana using Helm. This step will configure Grafana to be secured by Keycloak. Note this steps also created a `PodMonitor` resource for Keycloak in the namespace `keycloak-namespace`.
+   - For Minikube:
+     ```bash
+     export KEYCLOAK_URL=https://keycloak.keycloak-namespace.$(minikube ip).nip.io
+     helm upgrade --install prometheus prometheus-community/kube-prometheus-stack --version 39.11.0 -f grafana/monitoring.yaml \
+        --set grafana."grafana\.ini".server.root_url=https://grafana.$(minikube ip).nip.io \
+        --set grafana."grafana\.ini"."auth.generic_oauth".auth_url=${KEYCLOAK_URL}/realms/riviera-dev-realm/protocol/openid-connect/auth \
+        --set grafana."grafana\.ini"."auth.generic_oauth".token_url=${KEYCLOAK_URL}/realms/riviera-dev-realm/protocol/openid-connect/token \
+        --set grafana."grafana\.ini"."auth.generic_oauth".api_url=${KEYCLOAK_URL}/realms/riviera-dev-realm/protocol/openid-connect/userinfo \
+        --set prometheus.prometheusSpec.retention=168h
+     helm upgrade --install monitoring --set namespace=keycloak-namespace --set hostname=$(minikube ip).nip.io grafana/monitoring
+     ```
+    - For other Kubernetes clusters replace URLs mentioned above with the actual URLs for Grafana and Keycloak.
+
+#### Validate Prometheus and Grafana deployment
+
+Access Grafana on the URL printed by the following command.
+```bash
+echo "Access Grafana on https://$(kubectl -n monitoring get ingress/grafana-ingress -o jsonpath='{.spec.rules[0].host}')"
+```
+
+When Grafana login form appears, there is a possibility to login with Keycloak (`Sign in with Keycloak-OAuth`). You can use users `user` or `admin` to login. Notice the difference between access rights between these two users.
+
+You can then navigate to dashboard `Riviera Dev Workshop Dashboard` to see how many Keycloak sessions are currently present in memory.
+
+
+![Grafana dashboard screenshot](./images/grafana-dashboard.png)

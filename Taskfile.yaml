@@ -118,9 +118,21 @@ tasks:
     cmds:
       - eval $(minikube docker-env) && ./mvnw spring-boot:build-image -DskipTests -Dminikube.ip={{.MINIKUBE_IP}} -Dnamespace={{.NAMESPACE}}
       - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} CHECKSUM=$(sha256sum target/spring-security-1.0.0-SNAPSHOT.jar | awk '{ print $1 }') envsubst < k8s-resources/spring-security.yaml | kubectl -n {{.NAMESPACE}} apply -f - 
-
     
-
+  grafana-deploy:
+    desc: "Deploy Prometheus and Grafana for monitoring"
+    cmds:
+      - kubectl create namespace monitoring || true
+      - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+      - helm repo update
+      - |
+        helm upgrade --install prometheus prometheus-community/kube-prometheus-stack --version 39.11.0 -f grafana/monitoring.yaml \
+        --set grafana."grafana\.ini".server.root_url=https://grafana.{{.MINIKUBE_IP}}.nip.io \
+        --set grafana."grafana\.ini"."auth.generic_oauth".auth_url=https://keycloak.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io/realms/riviera-dev-realm/protocol/openid-connect/auth \
+        --set grafana."grafana\.ini"."auth.generic_oauth".token_url=https://keycloak.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io/realms/riviera-dev-realm/protocol/openid-connect/token \
+        --set grafana."grafana\.ini"."auth.generic_oauth".api_url=https://keycloak.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io/realms/riviera-dev-realm/protocol/openid-connect/userinfo \
+        --set prometheus.prometheusSpec.retention=168h
+      - helm upgrade --install monitoring --set namespace={{.NAMESPACE}} --set hostname={{.MINIKUBE_IP}}.nip.io grafana/monitoring
 
 
 

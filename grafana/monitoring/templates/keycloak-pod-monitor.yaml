@@ -1,0 +1,14 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: keycloak-metrics
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: keycloak
+  podMetricsEndpoints:
+    - port: management
+      scheme: https
+      tlsConfig:
+        insecureSkipVerify: true

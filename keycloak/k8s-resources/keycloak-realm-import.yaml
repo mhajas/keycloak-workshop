@@ -72,51 +72,6 @@ spec:
       - phone
       - offline_access
       - microprofile-jwt
-    - clientId: javascript-simple
-      name: ''
-      description: ''
-      rootUrl: ''
-      adminUrl: ''
-      baseUrl: ''
-      surrogateAuthRequired: false
-      enabled: true
-      alwaysDisplayInConsole: false
-      clientAuthenticatorType: client-secret
-      redirectUris:
-      - "http://javascript-simple.${NAMESPACE}.${MINIKUBE_IP}.nip.io/*" # REPLACE WITH JAVASCRIPT_SIMPLE_URL and append /*
-      webOrigins:
-      - "http://javascript-simple.${NAMESPACE}.${MINIKUBE_IP}.nip.io" # REPLACE WITH JAVASCRIPT_SIMPLE_URL
-      notBefore: 0
-      bearerOnly: false
-      consentRequired: false
-      standardFlowEnabled: true
-      implicitFlowEnabled: false
-      directAccessGrantsEnabled: true
-      serviceAccountsEnabled: false
-      publicClient: true
-      frontchannelLogout: true
-      protocol: openid-connect
-      attributes:
-        oidc.ciba.grant.enabled: 'false'
-        backchannel.logout.session.required: 'true'
-        oauth2.device.authorization.grant.enabled: 'false'
-        display.on.consent.screen: 'false'
-        backchannel.logout.revoke.offline.tokens: 'false'
-      authenticationFlowBindingOverrides: {}
-      fullScopeAllowed: true
-      nodeReRegistrationTimeout: -1
-      defaultClientScopes:
-      - web-origins
-      - acr
-      - roles
-      - profile
-      - basic
-      - email
-      optionalClientScopes:
-      - address
-      - phone
-      - offline_access
-      - microprofile-jwt
     - clientId: javascript-react
       name: ''
       description: ''
@@ -167,7 +122,7 @@ spec:
       bearerOnly: false
       redirectUris:
       - 'https://spring-security.${NAMESPACE}.${MINIKUBE_IP}.nip.io/*' # REPLACE WITH SPRING_SECURITY_URL and append /*
-      secret: Sj9DAvEG61ehuKIsj16PQpE34bk6Y4zq # notsecret
+      secret: "Sj9DAvEG61ehuKIsj16PQpE34bk6Y4zq" # notsecret
       authorizationServicesEnabled: true
       directAccessGrantsEnabled: true
       authorizationSettings:
@@ -229,6 +184,54 @@ spec:
         - name: urn:servlet-authz:page:main:actionForPremiumUser
         - name: urn:servlet-authz:page:main:actionForAdmin
         - name: urn:servlet-authz:page:main:actionForUser
+    - clientId: grafana
+      name: ''
+      description: ''
+      rootUrl: ''
+      adminUrl: ''
+      baseUrl: https://grafana.${MINIKUBE_IP}.nip.io/
+      surrogateAuthRequired: false
+      enabled: true
+      alwaysDisplayInConsole: false
+      clientAuthenticatorType: client-secret
+      secret: "LWPPMq0FVnI8MulRj2Hclp7F7EzBXodI" # notsecret
+      redirectUris:
+      - https://grafana.${MINIKUBE_IP}.nip.io/*
+      webOrigins:
+      - https://grafana.${MINIKUBE_IP}.nip.io
+      notBefore: 0
+      bearerOnly: false
+      consentRequired: false
+      standardFlowEnabled: true
+      implicitFlowEnabled: false
+      directAccessGrantsEnabled: true
+      serviceAccountsEnabled: false
+      publicClient: false
+      frontchannelLogout: true
+      protocol: openid-connect
+      attributes:
+        oidc.ciba.grant.enabled: 'false'
+        client.secret.creation.time: '1720100219'
+        backchannel.logout.session.required: 'true'
+        oauth2.device.authorization.grant.enabled: 'false'
+        display.on.consent.screen: 'false'
+        use.jwks.url: 'false'
+        backchannel.logout.revoke.offline.tokens: 'false'
+      authenticationFlowBindingOverrides: {}
+      fullScopeAllowed: true
+      nodeReRegistrationTimeout: -1
+      defaultClientScopes:
+      - web-origins
+      - acr
+      - profile
+      - offline_access
+      - roles
+      - basic
+      - email
+      optionalClientScopes:
+      - address
+      - phone
+      - microprofile-jwt
     users:
     - username: admin
       firstName: Administrator
@@ -275,3 +278,465 @@ spec:
         - default-roles-riviera-dev-realm
       notBefore: 0
       groups: []
+    clientScopes:
+    - id: 0f928736-e771-48e9-a40f-8c5c2b4eae66
+      name: phone
+      description: 'OpenID Connect built-in scope: phone'
+      protocol: openid-connect
+      attributes:
+        include.in.token.scope: 'true'
+        consent.screen.text: "${phoneScopeConsentText}"
+        display.on.consent.screen: 'true'
+      protocolMappers:
+      - id: 1a059313-096c-452b-a49b-bf4de433abda
+        name: phone number verified
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        consentRequired: false
+        config:
+          introspection.token.claim: 'true'
+          userinfo.token.claim: 'true'
+          user.attribute: phoneNumberVerified
+          id.token.claim: 'true'
+          access.token.claim: 'true'
+          claim.name: phone_number_verified
+          jsonType.label: boolean
+      - id: 0c185262-114e-4f79-9589-d63c1356ff1b
+        name: phone number
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        consentRequired: false
+        config:
+          introspection.token.claim: 'true'
+          userinfo.token.claim: 'true'
+          user.attribute: phoneNumber
+          id.token.claim: 'true'
+          access.token.claim: 'true'
+          claim.name: phone_number
+          jsonType.label: String
+    - id: 8c3d68d6-65f4-43af-a1f5-22d3c19044d6
+      name: web-origins
+      description: OpenID Connect scope for add allowed web origins to the access token
+      protocol: openid-connect
+      attributes:
+        include.in.token.scope: 'false'
+        consent.screen.text: ''
+        display.on.consent.screen: 'false'
+      protocolMappers:
+      - id: 5a07363c-f1d8-4ed3-be84-6f3279175f21
+        name: allowed web origins
+        protocol: openid-connect
+        protocolMapper: oidc-allowed-origins-mapper
+        consentRequired: false
+        config:
+          access.token.claim: 'true'
+          introspection.token.claim: 'true'
+    - id: 56dd297f-a2c1-4b27-863c-bd61566b20a7
+      name: address
+      description: 'OpenID Connect built-in scope: address'
+      protocol: openid-connect
+      attributes:
+        include.in.token.scope: 'true'
+        consent.screen.text: "${addressScopeConsentText}"
+        display.on.consent.screen: 'true'
+      protocolMappers:
+      - id: f088460b-14f7-41b5-9134-3d8965145c93
+        name: address
+        protocol: openid-connect
+        protocolMapper: oidc-address-mapper
+        consentRequired: false
+        config:
+          user.attribute.formatted: formatted
+          user.attribute.country: country
+          introspection.token.claim: 'true'
+          user.attribute.postal_code: postal_code
+          userinfo.token.claim: 'true'
+          user.attribute.street: street
+          id.token.claim: 'true'
+          user.attribute.region: region
+          access.token.claim: 'true'
+          user.attribute.locality: locality
+    - id: 9e7f9e25-c832-440e-891d-3df7f302a5c0
+      name: acr
+      description: OpenID Connect scope for add acr (authentication context class reference)
+        to the token
+      protocol: openid-connect
+      attributes:
+        include.in.token.scope: 'false'
+        display.on.consent.screen: 'false'
+      protocolMappers:
+      - id: 24924c35-14e6-438e-90f7-8fa2924257fd
+        name: acr loa level
+        protocol: openid-connect
+        protocolMapper: oidc-acr-mapper
+        consentRequired: false
+        config:
+          id.token.claim: 'true'
+          access.token.claim: 'true'
+          introspection.token.claim: 'true'
+    - id: d658e980-d84a-4089-bb42-75af82cc4297
+      name: email
+      description: 'OpenID Connect built-in scope: email'
+      protocol: openid-connect
+      attributes:
+        include.in.token.scope: 'true'
+        consent.screen.text: "${emailScopeConsentText}"
+        display.on.consent.screen: 'true'
+      protocolMappers:
+      - id: a9032a2c-42d2-461e-90b2-2fb5a27b796f
+        name: email
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        consentRequired: false
+        config:
+          introspection.token.claim: 'true'
+          userinfo.token.claim: 'true'
+          user.attribute: email
+          id.token.claim: 'true'
+          access.token.claim: 'true'
+          claim.name: email
+          jsonType.label: String
+      - id: 07eab04b-84d2-4df3-b561-db52f768a9d2
+        name: email verified
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-property-mapper
+        consentRequired: false
+        config:
+          introspection.token.claim: 'true'
+          userinfo.token.claim: 'true'
+          user.attribute: emailVerified
+          id.token.claim: 'true'
+          access.token.claim: 'true'
+          claim.name: email_verified
+          jsonType.label: boolean
+    - id: a0034e97-472b-46f0-959c-fb596aa7c064
+      name: basic
+      description: OpenID Connect scope for add all basic claims to the token
+      protocol: openid-connect
+      attributes:
+        include.in.token.scope: 'false'
+        display.on.consent.screen: 'false'
+      protocolMappers:
+      - id: 8a493a1b-0a49-4bf7-849c-955cb7918aa8
+        name: sub
+        protocol: openid-connect
+        protocolMapper: oidc-sub-mapper
+        consentRequired: false
+        config:
+          access.token.claim: 'true'
+          introspection.token.claim: 'true'
+      - id: 299df0e6-7e5d-49ee-9513-d60b39d7a682
+        name: auth_time
+        protocol: openid-connect
+        protocolMapper: oidc-usersessionmodel-note-mapper
+        consentRequired: false
+        config:
+          user.session.note: AUTH_TIME
+          id.token.claim: 'true'
+          introspection.token.claim: 'true'
+          access.token.claim: 'true'
+          claim.name: auth_time
+          jsonType.label: long
+    - id: 8fdc70ee-867f-48e6-961f-a924165e080c
+      name: role_list
+      description: SAML role list
+      protocol: saml
+      attributes:
+        consent.screen.text: "${samlRoleListScopeConsentText}"
+        display.on.consent.screen: 'true'
+      protocolMappers:
+      - id: 3467dd95-8e28-4518-b715-192bf176c6c4
+        name: role list
+        protocol: saml
+        protocolMapper: saml-role-list-mapper
+        consentRequired: false
+        config:
+          single: 'false'
+          attribute.nameformat: Basic
+          attribute.name: Role
+    - id: 9dd4bf6f-32e9-4c73-a63b-40da16deea29
+      name: microprofile-jwt
+      description: Microprofile - JWT built-in scope
+      protocol: openid-connect
+      attributes:
+        include.in.token.scope: 'true'
+        display.on.consent.screen: 'false'
+      protocolMappers:
+      - id: befdf82d-ee98-4ad4-9fc2-071efffe366c
+        name: groups
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-realm-role-mapper
+        consentRequired: false
+        config:
+          introspection.token.claim: 'true'
+          multivalued: 'true'
+          user.attribute: foo
+          id.token.claim: 'true'
+          access.token.claim: 'true'
+          claim.name: groups
+          jsonType.label: String
+      - id: 21aa3532-a91a-4e67-8c55-e77243522440
+        name: upn
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        consentRequired: false
+        config:
+          introspection.token.claim: 'true'
+          userinfo.token.claim: 'true'
+          user.attribute: username
+          id.token.claim: 'true'
+          access.token.claim: 'true'
+          claim.name: upn
+          jsonType.label: String
+    - id: ac10a675-7cd6-4ea3-9a0b-13f81a5c812d
+      name: offline_access
+      description: 'OpenID Connect built-in scope: offline_access'
+      protocol: openid-connect
+      attributes:
+        consent.screen.text: "${offlineAccessScopeConsentText}"
+        display.on.consent.screen: 'true'
+    - id: 0ee4225e-a629-4f8c-91f6-5cad2d38f1db
+      name: profile
+      description: 'OpenID Connect built-in scope: profile'
+      protocol: openid-connect
+      attributes:
+        include.in.token.scope: 'true'
+        consent.screen.text: "${profileScopeConsentText}"
+        display.on.consent.screen: 'true'
+      protocolMappers:
+      - id: eabbf9c1-93b3-43ed-8c12-c06f72d1d224
+        name: full name
+        protocol: openid-connect
+        protocolMapper: oidc-full-name-mapper
+        consentRequired: false
+        config:
+          id.token.claim: 'true'
+          introspection.token.claim: 'true'
+          access.token.claim: 'true'
+          userinfo.token.claim: 'true'
+      - id: bdc5121d-43ed-47d3-83c5-073f15e726d8
+        name: family name
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        consentRequired: false
+        config:
+          introspection.token.claim: 'true'
+          userinfo.token.claim: 'true'
+          user.attribute: lastName
+          id.token.claim: 'true'
+          access.token.claim: 'true'
+          claim.name: family_name
+          jsonType.label: String
+      - id: a7acb041-07f0-4bb2-bd8c-4e548271e61b
+        name: locale
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        consentRequired: false
+        config:
+          introspection.token.claim: 'true'
+          userinfo.token.claim: 'true'
+          user.attribute: locale
+          id.token.claim: 'true'
+          access.token.claim: 'true'
+          claim.name: locale
+          jsonType.label: String
+      - id: 8f1b9ca4-a07a-41e9-b9b7-6eac95aeb459
+        name: website
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        consentRequired: false
+        config:
+          introspection.token.claim: 'true'
+          userinfo.token.claim: 'true'
+          user.attribute: website
+          id.token.claim: 'true'
+          access.token.claim: 'true'
+          claim.name: website
+          jsonType.label: String
+      - id: 2c9a2550-47dc-45ef-af1a-efbf762e3703
+        name: gender
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        consentRequired: false
+        config:
+          introspection.token.claim: 'true'
+          userinfo.token.claim: 'true'
+          user.attribute: gender
+          id.token.claim: 'true'
+          access.token.claim: 'true'
+          claim.name: gender
+          jsonType.label: String
+      - id: 81afb8de-4704-4b6f-a66e-75b9e3c73bcf
+        name: nickname
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        consentRequired: false
+        config:
+          introspection.token.claim: 'true'
+          userinfo.token.claim: 'true'
+          user.attribute: nickname
+          id.token.claim: 'true'
+          access.token.claim: 'true'
+          claim.name: nickname
+          jsonType.label: String
+      - id: ec8f8303-652d-4d37-bcbb-6bdad35a5be4
+        name: username
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        consentRequired: false
+        config:
+          introspection.token.claim: 'true'
+          userinfo.token.claim: 'true'
+          user.attribute: username
+          id.token.claim: 'true'
+          access.token.claim: 'true'
+          claim.name: preferred_username
+          jsonType.label: String
+      - id: c5866f3d-0d31-4cb9-ab46-02a8c1ab05ef
+        name: middle name
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        consentRequired: false
+        config:
+          introspection.token.claim: 'true'
+          userinfo.token.claim: 'true'
+          user.attribute: middleName
+          id.token.claim: 'true'
+          access.token.claim: 'true'
+          claim.name: middle_name
+          jsonType.label: String
+      - id: 17cb49ee-50f0-47ac-bd50-7b63d3aa8222
+        name: picture
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        consentRequired: false
+        config:
+          introspection.token.claim: 'true'
+          userinfo.token.claim: 'true'
+          user.attribute: picture
+          id.token.claim: 'true'
+          access.token.claim: 'true'
+          claim.name: picture
+          jsonType.label: String
+      - id: a0b0c08e-5776-48fd-bdc8-ad781d98bc8f
+        name: given name
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        consentRequired: false
+        config:
+          introspection.token.claim: 'true'
+          userinfo.token.claim: 'true'
+          user.attribute: firstName
+          id.token.claim: 'true'
+          access.token.claim: 'true'
+          claim.name: given_name
+          jsonType.label: String
+      - id: '0969ebda-3d24-45c9-9867-667533f25cf3'
+        name: birthdate
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        consentRequired: false
+        config:
+          introspection.token.claim: 'true'
+          userinfo.token.claim: 'true'
+          user.attribute: birthdate
+          id.token.claim: 'true'
+          access.token.claim: 'true'
+          claim.name: birthdate
+          jsonType.label: String
+      - id: f2a72597-e396-419a-a3fd-fdac9e46af1c
+        name: updated at
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        consentRequired: false
+        config:
+          introspection.token.claim: 'true'
+          userinfo.token.claim: 'true'
+          user.attribute: updatedAt
+          id.token.claim: 'true'
+          access.token.claim: 'true'
+          claim.name: updated_at
+          jsonType.label: long
+      - id: eca61030-25f1-4d34-9513-b0b4d4b75983
+        name: profile
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        consentRequired: false
+        config:
+          introspection.token.claim: 'true'
+          userinfo.token.claim: 'true'
+          user.attribute: profile
+          id.token.claim: 'true'
+          access.token.claim: 'true'
+          claim.name: profile
+          jsonType.label: String
+      - id: 97967ae6-e15b-4df8-9545-303a889798fb
+        name: zoneinfo
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        consentRequired: false
+        config:
+          introspection.token.claim: 'true'
+          userinfo.token.claim: 'true'
+          user.attribute: zoneinfo
+          id.token.claim: 'true'
+          access.token.claim: 'true'
+          claim.name: zoneinfo
+          jsonType.label: String
+    - id: 2c3252fc-2f0c-480a-a2bc-3e19c9ff4069
+      name: roles
+      description: OpenID Connect scope for add user roles to the access token
+      protocol: openid-connect
+      attributes:
+        include.in.token.scope: 'false'
+        consent.screen.text: "${rolesScopeConsentText}"
+        display.on.consent.screen: 'true'
+      protocolMappers:
+      - id: cb4cfe6a-917f-4b6e-b412-1c583c3b0083
+        name: client roles
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-client-role-mapper
+        consentRequired: false
+        config:
+          user.attribute: foo
+          introspection.token.claim: 'true'
+          access.token.claim: 'true'
+          claim.name: resource_access.${client_id}.roles
+          jsonType.label: String
+          multivalued: 'true'
+      - id: c5574cf7-34f9-40fc-b1cd-3cccbf38735d
+        name: audience resolve
+        protocol: openid-connect
+        protocolMapper: oidc-audience-resolve-mapper
+        consentRequired: false
+        config:
+          introspection.token.claim: 'true'
+          access.token.claim: 'true'
+      - id: 3831c848-d137-457c-98d6-7276a99eb59b
+        name: realm roles
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-realm-role-mapper
+        consentRequired: false
+        config:
+          introspection.token.claim: 'true'
+          userinfo.token.claim: 'false'
+          multivalued: 'true'
+          user.attribute: foo
+          id.token.claim: 'true'
+          lightweight.claim: 'false'
+          access.token.claim: 'true'
+          claim.name: realm_access.roles
+          jsonType.label: String  
+    defaultDefaultClientScopes:
+    - role_list
+    - profile
+    - email
+    - roles
+    - web-origins
+    - acr
+    - basic
+    defaultOptionalClientScopes:
+    - offline_access
+    - address
+    - phone
+    - microprofile-jwt
