@@ -62,4 +62,4 @@ jobs:
           kubectl get pods -A
           kubectl get pods -A -o yaml
           kubectl get events -A
-          kubectl logs -n keycloak keycloak-namespace pods/keycloak-riviera-dev-0
+          kubectl logs -n keycloak-namespace pods/keycloak-riviera-dev-0
