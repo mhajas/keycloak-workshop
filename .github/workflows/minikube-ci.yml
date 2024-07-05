@@ -1,0 +1,66 @@
+name: minikube CI
+
+on:
+  schedule:
+    # run weekly to ensure to catch build being broken against upstream
+    - cron: "0 7 * * 1"
+  push:
+    # dependabot will create both branches and pull request
+    # only run on pull requests to avoid running twice and creating a release draft
+    branches-ignore:
+      - 'dependabot/**'
+  pull_request:
+
+concurrency:
+  # Only run once for latest commit per ref and cancel other (previous) runs.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'maven'
+      - uses: azure/setup-helm@v4
+        with:
+          version: 'v3.8.2'
+      - uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.23.3'
+      - name: Setup minikube-Kubernetes
+        uses: manusa/actions-setup-minikube@v2.11.0
+        with:
+          minikube version: 'v1.33.1'
+          # the version of Kubernetes needs to be in-sync with `rebuild.sh`
+          kubernetes version: 'v1.30.0'
+          github token: ${{ secrets.GITHUB_TOKEN }}
+          driver: docker
+          start args: --memory 4096
+      - name: Provision everything
+        run: |
+          task prepare-minikube
+          task keycloak-deploy-all
+          task quarkus-deploy-all
+          task spring-security-deploy
+          task javascript-react-deploy
+          task grafana-deploy
+      - name: Show logs on failure
+        if: ${{ failure() }}
+        working-directory: provision/minikube
+        run: |
+          kubectl get pods -A
+          kubectl get pods -A -o yaml
+          kubectl get events -A
+          kubectl logs -n keycloak keycloak-namespace pods/keycloak-riviera-dev-0
