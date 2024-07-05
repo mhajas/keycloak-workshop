@@ -179,33 +179,29 @@ task quarkus-deploy-all
 
 #### [Manual]
 
-1. Move `i-trust-keycloak.jks` to `quarkus-oidc-extension/src/main/resources` directory.
-    ```bash
-    cp i-trust-keycloak.jks quarkus-oidc-extension/src/main/resources
-    ```
-2. Change directory to quarkus-oid-extension.
+1. Change directory to quarkus-oid-extension.
     ```bash
     cd quarkus-oidc-extension
     ```
-3. If you are not using Minikube, it is necessary to do some configuration changes in [`application.properties` file](https://github.com/mhajas/keycloak-workshop/blob/main/quarkus-oidc-extension/src/main/resources/application.properties).
+2. If you are not using Minikube, it is necessary to do some configuration changes in [`application.properties` file](https://github.com/mhajas/keycloak-workshop/blob/main/quarkus-oidc-extension/src/main/resources/application.properties).
     - configure [Quarkus Kubernetes extension](https://quarkus.io/guides/deploying-to-kubernetes) to use correct image where you plan to push the Docker image that will be built in the following step. 
     - Configure Ingress host [here](https://github.com/mhajas/keycloak-workshop/blob/c585f0dca499b0b5d3d9a521c36a626ea649159a/quarkus-oidc-extension/src/main/resources/application.properties#L9-L16) to match the correct host.
     - Configure [quarkus.oidc.auth-server-url](https://github.com/mhajas/keycloak-workshop/blob/c585f0dca499b0b5d3d9a521c36a626ea649159a/quarkus-oidc-extension/src/main/resources/application.properties#L2C22-L2C30) to point to `$KEYCLOAK_URL/realms/riviera-dev-realm`.
     - Configure [`quarkus.http.cors.origins`](https://github.com/mhajas/keycloak-workshop/blob/c585f0dca499b0b5d3d9a521c36a626ea649159a/quarkus-oidc-extension/src/main/resources/application.properties#L19C3-L19C26) to match the host of the javascript-react application.
-4. Build the Quarkus source code application. Note the parameters `minikube.ip` and `namespace` are usable only for Minikube and .
+3. Build the Quarkus source code application. Note the parameters `minikube.ip` and `namespace` are usable only for Minikube and .
     ```bash
     ./mvnw install -DskipTests -Dminikube.ip=$(minikube ip) -Dnamespace=keycloak-namespace
     ```
-5. Build the Docker image and push to a registry so it is available for the Kubernetes cluster. 
+4. Build the Docker image and push to a registry so it is available for the Kubernetes cluster. 
     For Minikube execute the following:
     ```bash
     eval $(minikube docker-env) && docker build . -t quarkus-oidc-extension:1.0.0-SNAPSHOT -f src/main/docker/Dockerfile.jvm
     ```
-6. Deploy the Quarkus application to Kubernetes. This step creates a Kubernetes Deployment, Service and Ingress for the Quarkus application. Note the Kubernetes resources are automatically created by the Quarkus Kubernetes extension in step 3.
+5. Deploy the Quarkus application to Kubernetes. This step creates a Kubernetes Deployment, Service and Ingress for the Quarkus application. Note the Kubernetes resources are automatically created by the Quarkus Kubernetes extension in step 3.
     ```bash
     kubectl -n keycloak-namespace apply -f target/kubernetes/kubernetes.yml
     ```
-7. Change directory back to the root of the project.
+6. Change directory back to the root of the project.
     ```bash
     cd ..
     ```
