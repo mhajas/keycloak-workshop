@@ -14,6 +14,7 @@ All steps are automated. This can be used to quickly setup the environment witho
 ### Prerequisites
 
 - Minikube ([Installation guide here](https://minikube.sigs.k8s.io/docs/start/))
+- jq ([Installation guide here](https://jqlang.github.io/jq/))
 - Taskfile ([Installation guide here](https://taskfile.dev/installation/))
 - OpenSSL for creating certificates
 
@@ -141,8 +142,8 @@ task keycloak-deploy-all
 Obtain the Keycloak URL and credentials by executing the following command (for [Automated] deployments this is printed automatically):
 ```bash
 echo "Access Keycloak on https://$(kubectl -n keycloak-namespace get ingress/keycloak-riviera-dev-ingress -o jsonpath='{.spec.rules[0].host}')"
-echo "Username:" $(kubectl -n keycloak-namespace get secrets keycloak-riviera-dev-initial-admin -o json | jq .data.username -r | base64 -d)
-echo "Password:" $(kubectl -n keycloak-namespace get secrets keycloak-riviera-dev-initial-admin -o json | jq .data.password -r | base64 -d)
+echo "Username:" $(kubectl -n keycloak-namespace get secrets keycloak-riviera-dev-initial-admin -o=jsonpath='{.data.username}' | base64 -d)
+echo "Password:" $(kubectl -n keycloak-namespace get secrets keycloak-riviera-dev-initial-admin -o=jsonpath='{.data.password}' | base64 -d)
 ```
 
 Access Keycloak on the printed URL and login with the printed credentials. You should be able to access Keycloak admin console and `riviera-dev-realm` should be available if created. 
@@ -153,11 +154,11 @@ Obtain token for both users by executing the following commands:
 ```bash
 export KEYCLOAK_URL=$(kubectl -n keycloak-namespace get ingress/keycloak-riviera-dev-ingress -o jsonpath='{.spec.rules[0].host}')
 export USER_TOKEN=$(curl -s --insecure -X POST https://$KEYCLOAK_URL/realms/riviera-dev-realm/protocol/openid-connect/token \
-    -H "Authorization: Basic $(echo -n "quarkus-oidc-extension:1LZ65XcapsfnwEOLsByUW7KKv05mGsZF" | base64)" \
+    -u 'quarkus-oidc-extension:1LZ65XcapsfnwEOLsByUW7KKv05mGsZF' \
     -H "content-type: application/x-www-form-urlencoded" \
     -d "username=user&password=user&grant_type=password" | jq --raw-output '.access_token')
 export ADMIN_TOKEN=$(curl -s --insecure -X POST https://$KEYCLOAK_URL/realms/riviera-dev-realm/protocol/openid-connect/token \
-    -H "Authorization: Basic $(echo -n "quarkus-oidc-extension:1LZ65XcapsfnwEOLsByUW7KKv05mGsZF" | base64)" \
+    -u 'quarkus-oidc-extension:1LZ65XcapsfnwEOLsByUW7KKv05mGsZF' \
     -H "content-type: application/x-www-form-urlencoded" \
     -d "username=admin&password=admin&grant_type=password" | jq --raw-output '.access_token')
 ```
