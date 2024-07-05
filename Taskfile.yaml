@@ -112,7 +112,7 @@ tasks:
           -u 'quarkus-oidc-extension:1LZ65XcapsfnwEOLsByUW7KKv05mGsZF' \
           -H "content-type: application/x-www-form-urlencoded" \
           -d "username=user&password=user&grant_type=password" | jq --raw-output '.access_token')
-        curl -f -s -v -i "http://$(kubectl -n keycloak-namespace get ingress/quarkus-oidc-extension -o jsonpath='{.spec.rules[0].host}')/user" --header "Authorization: Bearer $USER_TOKEN"
+        curl -s -v -i "http://$(kubectl -n keycloak-namespace get ingress/quarkus-oidc-extension -o jsonpath='{.spec.rules[0].host}')/user" --header "Authorization: Bearer $USER_TOKEN"
       - |
         echo "Access the Quarkus app on http://quarkus-oidc-extension.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io"
 
