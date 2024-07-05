@@ -229,7 +229,7 @@ Content-Length: 49
 Connection: keep-alive
 Cache-Control: no-cache
 
-Hello from Quarkus user endpoint: User The First!% 
+Hello from Quarkus user endpoint: User The First! 
 ```
 
 ### Deploying SpringBoot with spring-security

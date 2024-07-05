@@ -100,11 +100,18 @@ tasks:
   quarkus-deploy-all:
     desc: "Prepare and deploy Quarkus app"
     cmds:
-      - cp .task/i-trust-keycloak.jks quarkus-oidc-extension/src/main/resources/
       - task: quarkus-build-sources
       - task: quarkus-build-docker
       - kubectl -n {{.NAMESPACE}} apply -f quarkus-oidc-extension/target/kubernetes/kubernetes.yml
+      - sleep 5
       - kubectl -n {{.NAMESPACE}} wait --for=condition=Available --timeout=300s deployments.apps/quarkus-oidc-extension
+      - kubectl -n {{.NAMESPACE}} wait --for=condition=Progressing --timeout=300s deployments.apps/quarkus-oidc-extension
+      - |
+        USER_TOKEN=$(curl -s --insecure -X POST https://$KEYCLOAK_URL/realms/riviera-dev-realm/protocol/openid-connect/token \
+          -H "Authorization: Basic $(echo -n "quarkus-oidc-extension:1LZ65XcapsfnwEOLsByUW7KKv05mGsZF" | base64)" \
+          -H "content-type: application/x-www-form-urlencoded" \
+          -d "username=user&password=user&grant_type=password" | jq --raw-output '.access_token')
+        curl -s -v -i "http://$(kubectl -n keycloak-namespace get ingress/quarkus-oidc-extension -o jsonpath='{.spec.rules[0].host}')/user" --header "Authorization: Bearer $USER_TOKEN"
       - |
         echo "Access the Quarkus app on http://quarkus-oidc-extension.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io"
 
