@@ -385,8 +385,8 @@
       {
         "current": {
           "selected": false,
-          "text": "runner-keycloak",
-          "value": "runner-keycloak"
+          "text": "keycloak-namespace",
+          "value": "keycloak-namespace"
         },
         "datasource": {
           "type": "prometheus",
