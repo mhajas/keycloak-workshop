@@ -82,8 +82,8 @@ tasks:
       - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < keycloak/k8s-resources/keycloak-realm-import.yaml | kubectl -n {{.NAMESPACE}} apply -f -
       - |
         echo "Access Keycloak on https://keycloak.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io"
-        echo "Username:" $(kubectl -n {{.NAMESPACE}} get secrets keycloak-riviera-dev-initial-admin -o json | jq .data.username -r | base64 -d)
-        echo "Password:" $(kubectl -n {{.NAMESPACE}} get secrets keycloak-riviera-dev-initial-admin -o json | jq .data.password -r | base64 -d)
+        echo "Username:" $(kubectl -n {{.NAMESPACE}} get secrets keycloak-riviera-dev-initial-admin -o=jsonpath='{.data.username}' | base64 -d)
+        echo "Password:" $(kubectl -n {{.NAMESPACE}} get secrets keycloak-riviera-dev-initial-admin -o=jsonpath='{.data.password}'| base64 -d)
 
   quarkus-build-sources:
     desc: "Build Quarkus app sources"
@@ -104,6 +104,8 @@ tasks:
       - task: quarkus-build-sources
       - task: quarkus-build-docker
       - kubectl -n {{.NAMESPACE}} apply -f quarkus-oidc-extension/target/kubernetes/kubernetes.yml
+      - |
+        echo "Access the Quarkus app on http://quarkus-oidc-extension.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io"
 
   javascript-react-deploy:
     desc: "Deploy React frontend application that communicates with Quarkus and SpringBoot apps"
