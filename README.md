@@ -13,8 +13,8 @@ All steps are automated. This can be used to quickly setup the environment witho
 
 ### Prerequisites
 
-- Minikube ([Installation guide here](https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download))
-- Taskfile ([Installation guide here](https://taskfile.dev/#/installation)) 
+- Minikube ([Installation guide here](https://minikube.sigs.k8s.io/docs/start/))
+- Taskfile ([Installation guide here](https://taskfile.dev/installation/))
 - OpenSSL for creating certificates
 
 ## Manual deployment
@@ -152,11 +152,11 @@ Access Keycloak on the printed URL and login with the printed credentials. You s
 Obtain token for both users by executing the following commands:
 ```bash
 export KEYCLOAK_URL=$(kubectl -n keycloak-namespace get ingress/keycloak-riviera-dev-ingress -o jsonpath='{.spec.rules[0].host}')
-export USER_TOKEN=$(curl --insecure -X POST https://$KEYCLOAK_URL/realms/riviera-dev-realm/protocol/openid-connect/token \
+export USER_TOKEN=$(curl -s --insecure -X POST https://$KEYCLOAK_URL/realms/riviera-dev-realm/protocol/openid-connect/token \
     -H "Authorization: Basic $(echo -n "quarkus-oidc-extension:1LZ65XcapsfnwEOLsByUW7KKv05mGsZF" | base64)" \
     -H "content-type: application/x-www-form-urlencoded" \
     -d "username=user&password=user&grant_type=password" | jq --raw-output '.access_token')
-export ADMIN_TOKEN=$(curl --insecure -X POST https://$KEYCLOAK_URL/realms/riviera-dev-realm/protocol/openid-connect/token \
+export ADMIN_TOKEN=$(curl -s --insecure -X POST https://$KEYCLOAK_URL/realms/riviera-dev-realm/protocol/openid-connect/token \
     -H "Authorization: Basic $(echo -n "quarkus-oidc-extension:1LZ65XcapsfnwEOLsByUW7KKv05mGsZF" | base64)" \
     -H "content-type: application/x-www-form-urlencoded" \
     -d "username=admin&password=admin&grant_type=password" | jq --raw-output '.access_token')
@@ -165,6 +165,11 @@ export ADMIN_TOKEN=$(curl --insecure -X POST https://$KEYCLOAK_URL/realms/rivier
 ### Deploying Quarkus with OIDC extension
 
 This step deploys a Quarkus with OIDC extension that is secured by Keycloak.
+
+#### Prerequisites
+
+This step requires additional prerequisites:
+- Java 17
 
 #### [Automated]
 
@@ -231,6 +236,11 @@ Hello from Quarkus user endpoint: User The First!%
 
 This step deploys a SpringBoot application with spring-security that is secured by Keycloak.
 
+#### Prerequisites
+
+This step requires additional prerequisites:
+- Java 17
+
 #### [Automated]
 
 ```bash
@@ -281,7 +291,7 @@ Spring-security application contains 2 endpoints `/` and `/protected/premium`. B
 `/` is accessible by users with role `user` and `/protected/premium` is accessible by users with role `admin`.
 You can change the endpoint and the used token in the following command to test the access.
 ```bash
-curl -i "http://$(kubectl -n keycloak-namespace get ingress/spring-security -o jsonpath='{.spec.rules[0].host}')/" --header "Authorization: Bearer $USER_TOKEN"
+curl -i -v "http://$(kubectl -n keycloak-namespace get ingress/spring-security -o jsonpath='{.spec.rules[0].host}')/" --header "Authorization: Bearer $USER_TOKEN"
 ```
 
 Expected output is:
