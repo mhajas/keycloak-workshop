@@ -134,9 +134,9 @@ tasks:
       - |
         helm upgrade --install prometheus prometheus-community/kube-prometheus-stack --version 39.11.0 -f grafana/monitoring.yaml \
         --set grafana."grafana\.ini".server.root_url=https://grafana.{{.MINIKUBE_IP}}.nip.io \
-        --set grafana."grafana\.ini"."auth.generic_oauth".auth_url=https://keycloak.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io/realms/riviera-dev-realm/protocol/openid-connect/auth \
-        --set grafana."grafana\.ini"."auth.generic_oauth".token_url=https://keycloak.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io/realms/riviera-dev-realm/protocol/openid-connect/token \
-        --set grafana."grafana\.ini"."auth.generic_oauth".api_url=https://keycloak.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io/realms/riviera-dev-realm/protocol/openid-connect/userinfo \
+        --set grafana."grafana\.ini"."auth\.generic_oauth".auth_url=https://keycloak.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io/realms/riviera-dev-realm/protocol/openid-connect/auth \
+        --set grafana."grafana\.ini"."auth\.generic_oauth".token_url=https://keycloak.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io/realms/riviera-dev-realm/protocol/openid-connect/token \
+        --set grafana."grafana\.ini"."auth\.generic_oauth".api_url=https://keycloak.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io/realms/riviera-dev-realm/protocol/openid-connect/userinfo \
         --set prometheus.prometheusSpec.retention=168h
       - helm upgrade --install monitoring --set namespace={{.NAMESPACE}} --set hostname={{.MINIKUBE_IP}}.nip.io grafana/monitoring
       - |

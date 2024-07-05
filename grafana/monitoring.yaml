@@ -33,9 +33,10 @@ grafana:
       login_attribute_path: username
       name_attribute_path: full_name
       tls_skip_verify_insecure: true
-      auth_url: https://keycloak.keycloak-namespace.192.168.49.2.nip.io/realms/riviera-dev-realm/protocol/openid-connect/auth
-      token_url: https://keycloak.keycloak-namespace.192.168.49.2.nip.io/realms/riviera-dev-realm/protocol/openid-connect/token
-      api_url: https://keycloak.keycloak-namespace.192.168.49.2.nip.io/realms/riviera-dev-realm/protocol/openid-connect/userinfo
+      # Those parameters are environment specific
+      # auth_url: https://keycloak.keycloak-namespace.xx.xx.xx.xx.nip.io/realms/riviera-dev-realm/protocol/openid-connect/auth
+      # token_url: https://keycloak.keycloak-namespace.xx.xx.xx.xx.nip.io/realms/riviera-dev-realm/protocol/openid-connect/token
+      # api_url: https://keycloak.keycloak-namespace.xx.xx.xx.xx.nip.io/realms/riviera-dev-realm/protocol/openid-connect/userinfo
       role_attribute_path: contains(realm_access.roles[*], 'admin') && 'Admin' || contains(realm_access.roles[*], 'editor') && 'Editor' || 'Viewer'
   datasources:
     datasources.yaml:
