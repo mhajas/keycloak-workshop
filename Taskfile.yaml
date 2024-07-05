@@ -5,7 +5,7 @@ output: prefixed
 vars:
   KC_OPERATOR_TAG: "25.0.1"
   MINIKUBE_IP: 
-    sh: minikube ip
+    sh: $(minikube ip) || echo ""
   NAMESPACE: "keycloak-namespace"
 
 tasks:
@@ -76,7 +76,7 @@ tasks:
       - kubectl -n {{.NAMESPACE}} create secret generic keycloak-db-secret --from-literal=username=testuser --from-literal=password=testpassword || true
       - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < keycloak/k8s-resources/keycloak.yaml | kubectl -n {{.NAMESPACE}} apply -f -
       - sleep 5
-      - kubectl -n {{.NAMESPACE}} wait --for=condition=Ready --timeout=180s keycloaks.k8s.keycloak.org/keycloak-riviera-dev
+      - kubectl -n {{.NAMESPACE}} wait --for=condition=Ready --timeout=300s keycloaks.k8s.keycloak.org/keycloak-riviera-dev
       - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < keycloak/k8s-resources/keycloak-ingress-tls-patch.yaml > .task/ingress-patch.yaml
       - kubectl -n {{.NAMESPACE}} patch ingress keycloak-riviera-dev-ingress --patch-file .task/ingress-patch.yaml
       - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < keycloak/k8s-resources/keycloak-realm-import.yaml | kubectl -n {{.NAMESPACE}} apply -f -
