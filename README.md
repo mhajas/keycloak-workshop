@@ -13,6 +13,7 @@ All steps are automated. This can be used to quickly setup the environment witho
 
 ### Prerequisites
 
+- kubectl ([Installation guide here](https://kubernetes.io/docs/tasks/tools/#kubectl)
 - Minikube ([Installation guide here](https://minikube.sigs.k8s.io/docs/start/))
 - jq ([Installation guide here](https://jqlang.github.io/jq/))
 - Taskfile ([Installation guide here](https://taskfile.dev/installation/))
@@ -26,6 +27,9 @@ It should be possible to use the steps with any Kubernetes cluster, however, you
 Each place that needs the change should be mentioned in the guide.
 
 ### Prerequisites
+
+- kubectl ([Installation guide here](https://kubernetes.io/docs/tasks/tools/#kubectl)
+- jq ([Installation guide here](https://jqlang.github.io/jq/))
 - OpenSSL for creating certificates
 
 ## Workshop steps
