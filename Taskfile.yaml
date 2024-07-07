@@ -33,7 +33,7 @@ tasks:
       - kubectl -n {{.NAMESPACE}} apply -f https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/refs/tags/{{.KC_OPERATOR_TAG}}/kubernetes/keycloakrealmimports.k8s.keycloak.org-v1.yml
       - kubectl -n {{.NAMESPACE}} delete deployment/keycloak-operator || true
       - kubectl -n {{.NAMESPACE}} apply -f https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/refs/tags/{{.KC_OPERATOR_TAG}}/kubernetes/kubernetes.yml
-      - kubectl -n {{.NAMESPACE}} wait --for=condition=Available --timeout=300s deployment/keycloak-operator
+      - kubectl -n {{.NAMESPACE}} wait --for=condition=Available --timeout=1200s deployment/keycloak-operator
       - kubectl -n {{.NAMESPACE}} wait --for=condition=Progressing --timeout=300s deployment/keycloak-operator
 
   # KEYCLOAK
@@ -87,7 +87,7 @@ tasks:
       - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < keycloak/k8s-resources/keycloak.yaml | kubectl -n {{.NAMESPACE}} apply -f -
       # wait for Keycloak Operator to pick up changes and wait for Keycloak deployment
       - sleep 2
-      - kubectl -n {{.NAMESPACE}} wait --for=condition=Ready --timeout=300s keycloaks.k8s.keycloak.org/keycloak-riviera-dev
+      - kubectl -n {{.NAMESPACE}} wait --for=condition=Ready --timeout=1200s keycloaks.k8s.keycloak.org/keycloak-riviera-dev
       - kubectl -n {{.NAMESPACE}} wait --for=condition=RollingUpdate=False --timeout=300s keycloak/keycloak-riviera-dev
       # Add TLS handling to the Ingress
       - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < keycloak/k8s-resources/keycloak-ingress-tls-patch.yaml > .task/ingress-patch.yaml
