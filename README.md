@@ -133,7 +133,7 @@ task keycloak-deploy-all
 
    - For Minikube execute the following command.
      ```bash
-     NAMESPACE=keycloak-namespace MINIKUBE_IP=$(minikube ip) envsubst < keycloak/k8s-resources/keycloak-realm-import.yaml | kubectl -n keycloak-namespace apply -f -
+     NAMESPACE=keycloak-namespace MINIKUBE_IP=$(minikube ip) envsubst '${NAMESPACE},${MINIKUBE_IP}' < keycloak/k8s-resources/keycloak-realm-import.yaml | kubectl -n keycloak-namespace apply -f -
      ```
    - For the other Kubernetes clusters update URLs manually. Note this step can be done later in the Keycloak admin console. Look for the comment `# REPLACE WITH [APPLICATION]_URL` and replace the URLs with actual values. Note the comment sometimes contains information to append `/*` to the URL. 
    Then execute the following command:
