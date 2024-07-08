@@ -202,11 +202,15 @@ task quarkus-deploy-all
     ```bash
     eval $(minikube docker-env) && docker build . -t quarkus-oidc-extension:1.0.0-SNAPSHOT -f src/main/docker/Dockerfile.jvm
     ```
-5. Deploy the Quarkus application to Kubernetes. This step creates a Kubernetes Deployment, Service and Ingress for the Quarkus application. Note the Kubernetes resources are automatically created by the Quarkus Kubernetes extension in step 3.
+5. This application also needs to trust Keycloak certificate and therefore we need to configure truststore. The application expects the truststore to be present in a Kubernetes Secret with name `i-trust-keycloak-secret`. Create it using the following command.
+    ```bash
+    kubectl -n keycloak-namespace create secret generic i-trust-keycloak-secret --from-file=../i-trust-keycloak.jks
+    ```
+6. Deploy the Quarkus application to Kubernetes. This step creates a Kubernetes Deployment, Service and Ingress for the Quarkus application. Note the Kubernetes resources are automatically created by the Quarkus Kubernetes extension in step 3.
     ```bash
     kubectl -n keycloak-namespace apply -f target/kubernetes/kubernetes.yml
     ```
-6. Change directory back to the root of the project.
+7. Change directory back to the root of the project.
     ```bash
     cd ..
     ```
@@ -266,7 +270,7 @@ task spring-security-deploy
      ```bash
      ./mvnw spring-boot:build-image -DskipTests
      ```
-4. This application also needs to trust Keycloak certificate and therefore we need to configure truststore. The application expects the truststore to be present in a Kubernetes Secret with name `i-trust-keycloak-secret`. Create it using the following command.
+4. This application also needs to trust Keycloak certificate and therefore we need to configure truststore. Skip this step if you already done that for Quarkus applicaiton. The application expects the truststore to be present in a Kubernetes Secret with name `i-trust-keycloak-secret`. Create it using the following command.
     ```bash
     kubectl -n keycloak-namespace create secret generic i-trust-keycloak-secret --from-file=../i-trust-keycloak.jks
     ```
