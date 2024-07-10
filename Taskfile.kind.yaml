@@ -172,7 +172,13 @@ tasks:
     desc: "Deploy SpringBoot application that uses Keycloak for authentication"
     dir: spring-security
     cmds:
-      - eval $(minikube docker-env) && ./mvnw -B spring-boot:build-image -DskipTests -Dminikube.ip={{.MINIKUBE_IP}} -Dnamespace={{.NAMESPACE}}
+      - rm -rf target
+      - mkdir -p target
+      - docker build -t spring-security:1.0.0-SNAPSHOT -f Dockerfile --build-arg MINIKUBE_IP={{.MINIKUBE_IP}} --build-arg NAMESPACE={{.NAMESPACE}} .
+      - docker create --name BUILDER_TMP spring-security:1.0.0-SNAPSHOT
+      - docker cp BUILDER_TMP:/deployments/spring-security-1.0.0-SNAPSHOT.jar target/ || (docker rm -v BUILDER_TMP && false)
+      - docker rm -v BUILDER_TMP || true
+      - kind load docker-image spring-security:1.0.0-SNAPSHOT
       - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} CHECKSUM=$(sha256sum target/spring-security-1.0.0-SNAPSHOT.jar | awk '{ print $1 }') envsubst < k8s-resources/spring-security.yaml | kubectl -n {{.NAMESPACE}} apply -f -
       - kubectl -n {{.NAMESPACE}} wait --for=condition=Available --timeout=300s deployments.apps/spring-security
       - |
