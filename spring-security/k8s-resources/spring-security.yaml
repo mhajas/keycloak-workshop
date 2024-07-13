@@ -23,6 +23,14 @@ spec:
       - image: spring-security:1.0.0-SNAPSHOT # Replace with actual Docker image in a registry
         name: spring-security
         resources: {}
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 9000
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 9000
         volumeMounts:
           - name: truststore-volume
             readOnly: true

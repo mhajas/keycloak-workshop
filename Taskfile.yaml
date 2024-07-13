@@ -31,10 +31,8 @@ tasks:
       - kubectl create namespace "{{.NAMESPACE}}" || true
       - kubectl -n {{.NAMESPACE}} apply -f https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/refs/tags/{{.KC_OPERATOR_TAG}}/kubernetes/keycloaks.k8s.keycloak.org-v1.yml
       - kubectl -n {{.NAMESPACE}} apply -f https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/refs/tags/{{.KC_OPERATOR_TAG}}/kubernetes/keycloakrealmimports.k8s.keycloak.org-v1.yml
-      - kubectl -n {{.NAMESPACE}} delete deployment/keycloak-operator || true
       - kubectl -n {{.NAMESPACE}} apply -f https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/refs/tags/{{.KC_OPERATOR_TAG}}/kubernetes/kubernetes.yml
-      - kubectl -n {{.NAMESPACE}} wait --for=condition=Available --timeout=1200s deployment/keycloak-operator
-      - kubectl -n {{.NAMESPACE}} wait --for=condition=Progressing --timeout=300s deployment/keycloak-operator
+      - kubectl -n {{.NAMESPACE}} rollout status deployment/keycloak-operator
 
   # KEYCLOAK
   keycloak-postgres-deploy:
@@ -56,7 +54,7 @@ tasks:
       vars:
         - NAME
     cmds:
-      - openssl req -subj '/CN={{.NAME}}.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io/O=Test Keycloak./C=US' -addext "subjectAltName = IP:{{.MINIKUBE_IP}}, DNS:{{.NAME}}.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io" -newkey rsa:2048 -nodes -keyout {{.NAME}}_key.pem -x509 -days 365 -out {{.NAME}}_certificate.pem
+      - openssl req -subj '/CN={{.NAME}}.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io/O=Test Keycloak./C=US' -addext "subjectAltName = IP:{{.MINIKUBE_IP}}, DNS:{{.NAME}}.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io, DNS:keycloak-riviera-dev-service.{{.NAMESPACE}}.svc" -newkey rsa:2048 -nodes -keyout {{.NAME}}_key.pem -x509 -days 365 -out {{.NAME}}_certificate.pem
       - openssl x509 -outform der -in {{.NAME}}_certificate.pem -out {{.NAME}}_certificate.der
       - (kubectl -n {{.NAMESPACE}} delete secret {{.NAME}}-tls-secret || true) && kubectl -n {{.NAMESPACE}} create secret tls {{.NAME}}-tls-secret --cert {{.NAME}}_certificate.pem --key {{.NAME}}_key.pem
       - rm i-trust-{{.NAME}}.jks || true
@@ -71,6 +69,7 @@ tasks:
   reset-minikube:
     cmds:
       - kubectl delete namespace {{.NAMESPACE}}
+      - rm -rf .task
 
   # KEYCLOAK
   keycloak-deploy-all:
@@ -85,8 +84,9 @@ tasks:
           NAME: keycloak
       - kubectl -n {{.NAMESPACE}} create secret generic keycloak-db-secret --from-literal=username=testuser --from-literal=password=testpassword || true
       - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} envsubst < keycloak/k8s-resources/keycloak.yaml | kubectl -n {{.NAMESPACE}} apply -f -
+      - (kubectl get pods -A | grep -E "(BackOff|Error)" | tr -s " " | cut -d" " -f1-2 | xargs -r -L 1 kubectl delete pod -n) || exit 0
       # wait for Keycloak Operator to pick up changes and wait for Keycloak deployment
-      - sleep 2
+      - sleep 1
       - kubectl -n {{.NAMESPACE}} wait --for=condition=Ready --timeout=1200s keycloaks.k8s.keycloak.org/keycloak-riviera-dev
       - kubectl -n {{.NAMESPACE}} wait --for=condition=RollingUpdate=False --timeout=300s keycloak/keycloak-riviera-dev
       # Add TLS handling to the Ingress
@@ -97,7 +97,7 @@ tasks:
       - kubectl -n {{.NAMESPACE}} wait --for=condition=Done --timeout=300s keycloakrealmimports.k8s.keycloak.org/riviera-dev-realm
       - kubectl -n {{.NAMESPACE}} wait --for=condition=Started=False --timeout=300s keycloakrealmimports.k8s.keycloak.org/riviera-dev-realm
       - kubectl -n {{.NAMESPACE}} wait --for=condition=HasErrors=False --timeout=300s keycloakrealmimports.k8s.keycloak.org/riviera-dev-realm
-      # Although this will be a rolling restart, this is still disruptive as we only have a single Pod in our setup here. It wouldn't be disruptive if we would have at least two Pods.
+       # Although this will be a rolling restart, this is still disruptive as we only have a single Pod in our setup here. It wouldn't be disruptive if we would have at least two Pods.
       - kubectl -n {{.NAMESPACE}} wait --for=condition=Ready --timeout=300s keycloaks.k8s.keycloak.org/keycloak-riviera-dev
       - kubectl -n {{.NAMESPACE}} wait --for=condition=RollingUpdate=False --timeout=300s keycloak/keycloak-riviera-dev
       - |
@@ -123,16 +123,9 @@ tasks:
       - task: quarkus-build-sources
       - task: quarkus-build-docker
       - kubectl -n {{.NAMESPACE}} apply -f quarkus-oidc-extension/target/kubernetes/kubernetes.yml
-      - sleep 2 # Wait for the deployment controller to update the status
-      - kubectl -n {{.NAMESPACE}} wait --for=condition=Available --timeout=300s deployments.apps/quarkus-oidc-extension
-      - kubectl -n {{.NAMESPACE}} wait --for=condition=Progressing --timeout=300s deployments.apps/quarkus-oidc-extension
+      - kubectl -n {{.NAMESPACE}} rollout status deployments.apps/quarkus-oidc-extension
       - sleep 2 # Wait for the ingress controller to update the ingress configuration
       - |
-        echo $(kubectl -n keycloak-namespace get ingress/keycloak-riviera-dev-ingress -o jsonpath='{.spec.rules[0].host}')
-        curl -f -v --insecure -X POST https://$(kubectl -n keycloak-namespace get ingress/keycloak-riviera-dev-ingress -o jsonpath='{.spec.rules[0].host}')/realms/riviera-dev-realm/protocol/openid-connect/token \
-          -u 'quarkus-oidc-extension:1LZ65XcapsfnwEOLsByUW7KKv05mGsZF' \
-          -H "content-type: application/x-www-form-urlencoded" \
-          -d 'username=user&password=user&grant_type=password'
         USER_TOKEN=$(curl -f -s --insecure -X POST https://$(kubectl -n keycloak-namespace get ingress/keycloak-riviera-dev-ingress -o jsonpath='{.spec.rules[0].host}')/realms/riviera-dev-realm/protocol/openid-connect/token \
           -u 'quarkus-oidc-extension:1LZ65XcapsfnwEOLsByUW7KKv05mGsZF' \
           -H "content-type: application/x-www-form-urlencoded" \
@@ -157,7 +150,14 @@ tasks:
     cmds:
       - eval $(minikube docker-env) && ./mvnw -B spring-boot:build-image -DskipTests -Dminikube.ip={{.MINIKUBE_IP}} -Dnamespace={{.NAMESPACE}}
       - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} CHECKSUM=$(sha256sum target/spring-security-1.0.0-SNAPSHOT.jar | awk '{ print $1 }') envsubst < k8s-resources/spring-security.yaml | kubectl -n {{.NAMESPACE}} apply -f -
-      - kubectl -n {{.NAMESPACE}} wait --for=condition=Available --timeout=300s deployments.apps/spring-security
+      - kubectl -n {{.NAMESPACE}} rollout status deployment/spring-security
+      - sleep 2 # Wait for the ingress controller to update the ingress configuration
+      - |
+        USER_TOKEN=$(curl -f -s --insecure -X POST https://$(kubectl -n keycloak-namespace get ingress/keycloak-riviera-dev-ingress -o jsonpath='{.spec.rules[0].host}')/realms/riviera-dev-realm/protocol/openid-connect/token \
+          -u 'quarkus-oidc-extension:1LZ65XcapsfnwEOLsByUW7KKv05mGsZF' \
+          -H "content-type: application/x-www-form-urlencoded" \
+          -d 'username=user&password=user&grant_type=password' | jq --raw-output '.access_token')
+        curl -f -s -v -i "http://$(kubectl -n keycloak-namespace get ingress/spring-security -o jsonpath='{.spec.rules[0].host}')/" --header "Authorization: Bearer $USER_TOKEN"
       - |
         echo "Access the Spring app on http://spring-security.{{.NAMESPACE}}.{{.MINIKUBE_IP}}.nip.io"
 
@@ -177,9 +177,3 @@ tasks:
       - helm upgrade --install monitoring --set namespace={{.NAMESPACE}} --set hostname={{.MINIKUBE_IP}}.nip.io grafana/monitoring
       - |
         echo "Access Grafana on https://$(kubectl -n monitoring get ingress/grafana-ingress -o jsonpath='{.spec.rules[0].host}')"
-
-
-
-
-    
-    

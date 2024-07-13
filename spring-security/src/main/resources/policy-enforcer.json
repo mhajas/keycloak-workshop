@@ -1,6 +1,6 @@
 {
   "realm": "riviera-dev-realm",
-  "auth-server-url": "https://keycloak.${namespace}.${minikube.ip}.nip.io",
+  "auth-server-url": "https://keycloak-riviera-dev-service.${namespace}.svc:8443",
   "resource": "spring-security",
   "credentials": {
     "secret": "Sj9DAvEG61ehuKIsj16PQpE34bk6Y4zq"
