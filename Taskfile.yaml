@@ -124,7 +124,7 @@ tasks:
       - task: quarkus-build-docker
       - kubectl -n {{.NAMESPACE}} apply -f quarkus-oidc-extension/target/kubernetes/kubernetes.yml
       - kubectl -n {{.NAMESPACE}} rollout status deployments.apps/quarkus-oidc-extension
-      - sleep 2 # Wait for the ingress controller to update the ingress configuration
+      - sleep 5 # Wait for the ingress controller to update the ingress configuration
       - |
         USER_TOKEN=$(curl -f -s --insecure -X POST https://$(kubectl -n keycloak-namespace get ingress/keycloak-riviera-dev-ingress -o jsonpath='{.spec.rules[0].host}')/realms/riviera-dev-realm/protocol/openid-connect/token \
           -u 'quarkus-oidc-extension:1LZ65XcapsfnwEOLsByUW7KKv05mGsZF' \
@@ -151,7 +151,7 @@ tasks:
       - eval $(minikube docker-env) && ./mvnw -B spring-boot:build-image -DskipTests -Dminikube.ip={{.MINIKUBE_IP}} -Dnamespace={{.NAMESPACE}}
       - NAMESPACE={{.NAMESPACE}} MINIKUBE_IP={{.MINIKUBE_IP}} CHECKSUM=$(sha256sum target/spring-security-1.0.0-SNAPSHOT.jar | awk '{ print $1 }') envsubst < k8s-resources/spring-security.yaml | kubectl -n {{.NAMESPACE}} apply -f -
       - kubectl -n {{.NAMESPACE}} rollout status deployment/spring-security
-      - sleep 2 # Wait for the ingress controller to update the ingress configuration
+      - sleep 5 # Wait for the ingress controller to update the ingress configuration
       - |
         USER_TOKEN=$(curl -f -s --insecure -X POST https://$(kubectl -n keycloak-namespace get ingress/keycloak-riviera-dev-ingress -o jsonpath='{.spec.rules[0].host}')/realms/riviera-dev-realm/protocol/openid-connect/token \
           -u 'quarkus-oidc-extension:1LZ65XcapsfnwEOLsByUW7KKv05mGsZF' \
