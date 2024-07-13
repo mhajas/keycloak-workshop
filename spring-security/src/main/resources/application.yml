@@ -3,4 +3,17 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: https://keycloak.${namespace}.${minikube.ip}.nip.io/realms/riviera-dev-realm/protocol/openid-connect/certs
+          jwk-set-uri: https://keycloak-riviera-dev-service.${namespace}.svc:8443/realms/riviera-dev-realm/protocol/openid-connect/certs
+
+management:
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  server:
+    port: 9000

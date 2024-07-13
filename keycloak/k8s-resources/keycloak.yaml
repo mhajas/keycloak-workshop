@@ -16,7 +16,8 @@ spec:
   http:
     tlsSecret: keycloak-tls-secret
   hostname:
-    hostname: keycloak.${NAMESPACE}.${MINIKUBE_IP}.nip.io # REPLACE WITH KEYCLOAK_URL
+    hostname: https://keycloak.${NAMESPACE}.${MINIKUBE_IP}.nip.io # REPLACE WITH KEYCLOAK_URL
+    backchannelDynamic: true
   features:
     enabled:
       - persistent-user-sessions

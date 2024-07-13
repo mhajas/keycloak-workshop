@@ -19,6 +19,11 @@ import java.io.IOException;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import org.keycloak.adapters.authorization.integration.jakarta.ServletPolicyEnforcerFilter;
 import org.keycloak.adapters.authorization.spi.ConfigurationResolver;
 import org.keycloak.adapters.authorization.spi.HttpRequest;
@@ -34,6 +39,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 
 /**
  * OAuth resource configuration.
@@ -47,15 +53,30 @@ public class OAuth2ResourceServerSecurityConfiguration {
 	@Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}")
 	String jwkSetUri;
 
+	// this is the port for management endpoints
+	@Value("${management.server.port}")
+	private int managementPort;
+
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http
 				.authorizeHttpRequests((authorize) -> authorize
+						.requestMatchers(checkPort(managementPort)).permitAll()
 						.anyRequest().authenticated()
 				)
 				.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
 				.addFilterAfter(createPolicyEnforcerFilter(), BearerTokenAuthenticationFilter.class);
 		return http.build();
+	}
+
+	/**
+	 * This method verifies whether a request port is equal to the provided method parameter
+	 *
+	 * @param port Port that needs to be checked with the incoming request port
+	 * @return Returns a request matcher object with port comparison
+	 */
+	private RequestMatcher checkPort(final int port) {
+		return (HttpServletRequest request) -> port == request.getLocalPort();
 	}
 
 	private ServletPolicyEnforcerFilter createPolicyEnforcerFilter() {
@@ -73,7 +94,16 @@ public class OAuth2ResourceServerSecurityConfiguration {
 			public PolicyEnforcerConfig resolve(HttpRequest request) {
 				return config;
 			}
-		});
+		}) {
+			@Override
+			public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+				if (servletRequest.getLocalPort() == managementPort) {
+					filterChain.doFilter(servletRequest, servletResponse);
+				} else {
+					super.doFilter(servletRequest, servletResponse, filterChain);
+				}
+			}
+		};
 	}
 
 	@Bean
