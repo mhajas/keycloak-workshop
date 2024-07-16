@@ -7,14 +7,10 @@ output: prefixed
 vars:
   KC_OPERATOR_TAG: "25.0.1"
   MINIKUBE_IP: 
-    # sh: echo 127-0-0-1
     sh: ip route get 8.8.8.8 | head -1 | cut -d\  -f 7 | sed 's|\.|-|g'
   SIGNING_IP: 
     sh: ip route get 8.8.8.8 | head -1 | cut -d\  -f 7 
   NAMESPACE: "keycloak-namespace"
-  # REGISTRY_NAME: "docker.io"
-  # REGISTRY_PORT: "5001"
-  # REGISTRY_DIR: REGISTRY_DIR="/etc/containerd/certs.d/localhost:{{.REGISTRY_PORT}}"
 
 tasks:
 
